@@ -1,0 +1,141 @@
+import { images } from "@/assets/assets";
+
+import {
+  BellIcon,
+  PlusCircleIcon,
+  ShoppingCartIcon,
+  CreditCardIcon,
+  LockOpenIcon,
+  BanknotesIcon,
+} from "@heroicons/react/24/solid";
+
+export const ordersOverviewData = [
+  {
+    img: images.lead1,
+    icon: BellIcon,
+    color: "text-blue-gray-300",
+    title: "Logistics Lead",
+    description: "Logistics Solutions",
+    email: "contact@logisticspro.com",
+    address: "123 Kingsway Avenue, Sandton, Johannesburg, South Africa",
+    person: "Chris P. Bacon",
+    rate: "6/10",
+    status: "Interested",
+    history: [
+      { company: "Trans-Logistics Inc.", industry: "Transportation", date: "2023-01-15" },
+      { company: "Fast Cargo", industry: "Shipping", date: "2022-11-20" },
+      { company: "Global Movers", industry: "Relocation Services", date: "2023-06-10" },
+    ],
+    notes: [
+      { date: "2023-10-01", note: "Client interested in expanding services to Cape Town." },
+      { date: "2023-09-15", note: "Requested additional quotes for long-distance haulage." },
+    ],
+  },
+  {
+    img: images.lead2,
+    icon: PlusCircleIcon,
+    color: "text-blue-gray-300",
+    title: "Pharma Lead",
+    description: "Pharmaceuticals",
+    email: "pharma.leads@medicor.com",
+    address: "78 Market Street, Rosebank, Cape Town, South Africa",
+    person: "Emma O'Neil",
+    rate: "7/10",
+    status: "Contacted",
+    history: [
+      { company: "Medicore Pharma", industry: "Pharmaceuticals", date: "2023-04-22" },
+      { company: "HealthFirst Labs", industry: "Healthcare", date: "2022-09-05" },
+      { company: "Vitality Drugs", industry: "Pharmaceuticals", date: "2023-08-19" },
+    ],
+    notes: [
+      { date: "2023-10-05", note: "Potential partnership opportunity discussed." },
+      { date: "2023-09-20", note: "Client raised concerns about delivery times." },
+    ],
+  },
+  {
+    img: images.lead3,
+    icon: ShoppingCartIcon,
+    color: "text-blue-gray-300",
+    title: "AgriTech Lead",
+    description: "AgriTech",
+    email: "farming@agriworld.com",
+    address: "45 Olive Farm Road, Stellenbosch, South Africa",
+    person: "Rajiv Kumar",
+    rate: "9/10",
+    status: "Interested",
+    history: [
+      { company: "Agro Innovations", industry: "Agriculture", date: "2023-02-14" },
+      { company: "Green Farms", industry: "Farming", date: "2022-10-30" },
+      { company: "BioGrow Solutions", industry: "Biotechnology", date: "2023-05-01" },
+    ],
+    notes: [
+      { date: "2023-10-10", note: "Demonstration of new tech scheduled for next week." },
+      { date: "2023-09-28", note: "Client satisfied with last quarter's performance." },
+    ],
+  },
+  {
+    img: images.lead4,
+    icon: CreditCardIcon,
+    color: "text-blue-gray-300",
+    title: "FinTech Innovator",
+    description: "FinTech Solutions",
+    email: "finance@swiftpay.com",
+    address: "200 Finance Hub, Newtown, Johannesburg, South Africa",
+    person: "Linda Steele",
+    rate: "5/10",
+    status: "Not Interested",
+    history: [
+      { company: "SwiftPay", industry: "Finance", date: "2023-03-12" },
+      { company: "SecureBank", industry: "Banking", date: "2022-12-25" },
+      { company: "InvestTech", industry: "Financial Technology", date: "2023-07-15" },
+    ],
+    notes: [
+      { date: "2023-10-02", note: "Client requested integration of new payment API." },
+      { date: "2023-09-10", note: "Follow-up meeting on security improvements." },
+    ],
+  },
+  {
+    img: images.lead5,
+    icon: LockOpenIcon,
+    color: "text-blue-gray-300",
+    title: "Retail Sales Lead",
+    description: "Retail Sales",
+    email: "sales@bigsell.com",
+    address: "16 Bree Street, CBD, Cape Town, South Africa",
+    person: "Marcus Kingsley",
+    rate: "8/10",
+    status: "Contacted",
+    history: [
+      { company: "BigSell", industry: "Retail", date: "2023-01-10" },
+      { company: "ShopEase", industry: "E-commerce", date: "2022-11-02" },
+      { company: "GlobalMart", industry: "Retail", date: "2023-06-17" },
+    ],
+    notes: [
+      { date: "2023-09-30", note: "Client interested in expanding product categories." },
+      { date: "2023-09-12", note: "Discussed improvements to user interface on website." },
+    ],
+  },
+  {
+    img: images.lead6,
+    icon: BanknotesIcon,
+    color: "text-blue-gray-300",
+    title: "Digital Marketing Expert",
+    description: "Digital Marketing",
+    email: "marketing@creativeminds.co",
+    address: "82 Web Studio Lane, Pretoria, South Africa",
+    person: "Natalie Rose",
+    rate: "10/10",
+    status: "Interested",
+    history: [
+      { company: "Creative Minds", industry: "Digital Marketing", date: "2023-03-18" },
+      { company: "Brandify", industry: "Brand Management", date: "2022-12-30" },
+      { company: "AdVance", industry: "Advertising", date: "2023-07-25" },
+    ],
+    notes: [
+      { date: "2023-10-08", note: "Client is considering a rebranding campaign." },
+      { date: "2023-09-15", note: "Excellent feedback received for recent social media campaign." },
+    ],
+  },
+];
+
+export default ordersOverviewData;
