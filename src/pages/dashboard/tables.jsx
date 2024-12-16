@@ -51,6 +51,50 @@ const [thirdParty, setThirdParty] = useState([
   { id: 1, link: selectedClient?.thirdParty?.[0] || "thirdParty link" },
   
 ]);
+const [showEmailsModal, setShowEmailsModal] = useState(false);
+  const [selectedEmail, setSelectedEmail] = useState(null);
+  const [replyContent, setReplyContent] = useState("");
+
+  // Dummy email data
+  const emails = [
+    {
+      id: 1,
+      sender: "john.doe@example.com",
+      subject: "Meeting Follow-up",
+      content: "Thank you for the meeting earlier. Looking forward to your response!",
+      flagged: false,
+    },
+    {
+      id: 2,
+      sender: "team@newsletter.com",
+      subject: "Weekly Update",
+      content: "Here's our weekly update. We've added exciting new features!",
+      flagged: false,
+    },
+    {
+      id: 3,
+      sender: "support@service.com",
+      subject: "Password Reset",
+      content: "Your password reset was successful. If this wasn't you, contact us immediately.",
+      flagged: false,
+    },
+  ];
+
+  const handleReply = () => {
+    if (replyContent.trim()) {
+      alert(`Reply sent:\n\n${replyContent}`);
+      setReplyContent("");
+    }
+  };
+
+  const handleFlagAsPositive = (emailId) => {
+    const emailIndex = emails.findIndex((email) => email.id === emailId);
+    if (emailIndex !== -1 && !emails[emailIndex].flagged) {
+      emails[emailIndex].flagged = true;
+      CurrentClient.positiveResponses += 1; // Increment positive responses
+    }
+  };
+
 
 const [resources, setResources] = useState([]);
   
@@ -375,6 +419,7 @@ const handleCloseStatsModal = () => {
     // Save the PDF
     doc.save(`Invoice_${invoice.id}.pdf`);
   };
+
   
   const exportWeeklySummaryAsPDF = async (client) => {
     const doc = new jsPDF();
@@ -676,58 +721,121 @@ const handleCloseStatsModal = () => {
 
       {/* Stats Details Modal */}
       <Dialog open={ShowStatsModal} onClose={handleCloseStatsModal} maxWidth="md" fullWidth scroll="paper">
-      <DialogHeader>Client Stats</DialogHeader>
-      <DialogBody divider className="max-h-[400px] overflow-y-scroll">
-       <div className="p-6" style={{ overflowY: "auto" }}>
-        {CurrentClient && (
-          <>
-            <Typography variant="h5" className="mb-4">
-              {CurrentClient.name} - Stats
-            </Typography>
+        <DialogHeader>Client Stats</DialogHeader>
+        <DialogBody divider className="max-h-[400px] overflow-y-scroll">
+          <div className="p-6" style={{ overflowY: "auto" }}>
+            {CurrentClient && (
+              <>
+                <Typography variant="h5" className="mb-4">
+                  {CurrentClient.name} - Stats
+                </Typography>
 
-            {/* Line Chart for Lead Response Performance */}
-            <div className="mb-6">
-              <canvas ref={lineChartRef} width="400" height="200"></canvas> {/* Ref for the line chart */}
-            </div>
+                {/* Line Chart */}
+                <div className="mb-6">
+                  <canvas ref={lineChartRef} width="400" height="200"></canvas>
+                </div>
 
-            {/* Doughnut Chart for Targeted Industries */}
-            <div className="mb-6">
-              <canvas ref={doughnutChartRef} width="300" height="300"></canvas> {/* Ref for the doughnut chart */}
-            </div>
+                {/* Doughnut Chart */}
+                <div className="mb-6">
+                  <canvas ref={doughnutChartRef} width="300" height="300"></canvas>
+                </div>
 
-            {/* Stats Summary */}
-            <div className="mb-4">
-              <p className="text-gray-700 text-sm">
-                <strong>Total Leads:</strong> {CurrentClient.totalLeads}
-              </p>
-              <p className="text-gray-700 text-sm">
-                <strong>Contacted:</strong> {CurrentClient.contacted}
-              </p>
-              <p className="text-gray-700 text-sm">
-                <strong>Positive Responses:</strong>{" "}
-                {CurrentClient.positiveResponses}
-              </p>
-            </div>
+                {/* Stats Summary */}
+                <div className="mb-4">
+                  <p className="text-gray-700 text-sm">
+                    <strong>Total Leads:</strong> {CurrentClient.totalLeads}
+                  </p>
+                  <p className="text-gray-700 text-sm">
+                    <strong>Responses:</strong> {CurrentClient.contacted}
+                  </p>
+                  <p className="text-gray-700 text-sm flex items-center">
+                    <strong>Positive Responses:</strong> {CurrentClient.positiveResponses}
+                    <Button
+                      size="sm"
+                      variant="outlined"
+                      color="blue"
+                      className="ml-4"
+                      onClick={() => setShowEmailsModal(true)}
+                    >
+                      View Emails
+                    </Button>
+                  </p>
+                </div>
 
-            {/* Map */}
-            <div className="h-64 w-full mb-4">
-              <MapContainer center={[0, 0]} zoom={2} className="h-full w-full rounded-lg">
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                {CurrentClient.leadLocations.map((loc, index) => (
-                  <Marker position={[loc.lat, loc.lng]} key={index} />
-                ))}
-              </MapContainer>
-            </div>
-          </>
-        )}
-      </div>  
-      </DialogBody>
-      <DialogFooter>
-      <Button size="sm" variant="gradient" color="red" onClick={handleCloseStatsModal}>
-                Close
-              </Button>
+                {/* Map */}
+                <div className="h-64 w-full mb-4">
+                  <MapContainer center={[0, 0]} zoom={2} className="h-full w-full rounded-lg">
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    {CurrentClient.leadLocations.map((loc, index) => (
+                      <Marker position={[loc.lat, loc.lng]} key={index} />
+                    ))}
+                  </MapContainer>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button size="sm" variant="gradient" color="red" onClick={handleCloseStatsModal}>
+            Close
+          </Button>
         </DialogFooter>
-    </Dialog>
+      </Dialog>
+
+      {/* Emails Popup */}
+      <Dialog open={showEmailsModal} onClose={() => setShowEmailsModal(false)} maxWidth="md" fullWidth>
+        <DialogHeader>Emails</DialogHeader>
+        <DialogBody divider>
+          <div className="overflow-y-auto max-h-[400px]">
+            <ul>
+              {emails.map((email) => (
+                <li
+                  key={email.id}
+                  className="p-3 rounded-lg bg-gray-100 mb-3 cursor-pointer hover:bg-gray-200"
+                  onClick={() => setSelectedEmail(email)}
+                >
+                  <div className="font-medium text-gray-700">{email.sender}</div>
+                  <div className="text-sm text-gray-600 truncate">{email.subject}</div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {selectedEmail && (
+            <div className="mt-4 border-t pt-4">
+              <h2 className="text-lg font-semibold">{selectedEmail.subject}</h2>
+              <p className="text-gray-700">{selectedEmail.content}</p>
+
+              {/* Reply Section */}
+              <Textarea
+                className="mt-4"
+                rows={4}
+                placeholder="Type your reply..."
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+              />
+              <div className="flex space-x-2 mt-3">
+                <Button variant="gradient" color="green" onClick={handleReply}>
+                  Send Reply
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="blue"
+                  onClick={() => handleFlagAsPositive(selectedEmail.id)}
+                >
+                  Flag as Positive
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogBody>
+        <DialogFooter>
+          <Button size="sm" variant="gradient" color="red" onClick={() => setShowEmailsModal(false)}>
+            Close
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
 
 
          {/* Client Details Modal */}
