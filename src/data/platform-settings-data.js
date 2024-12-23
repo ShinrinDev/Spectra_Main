@@ -1,18 +1,26 @@
+
+
+
+
+
+
+
+
 export const platformSettingsData = [
   {
     title: "account",
     options: [
       {
         checked: true,
-        label: "Email me when someone wants a lead",
+        label: "Email me when a client emails a lead ",
       },
       {
         checked: false,
-        label: "Email me when someone answers our emails ",
+        label: "Email me weekly invoices ",
       },
       {
         checked: true,
-        label: "Email me when someone looks like a potential lead",
+        label: "Email me when a lead respond",
       },
     ],
   },
@@ -21,15 +29,15 @@ export const platformSettingsData = [
     options: [
       {
         checked: false,
-        label: "New launches and projects",
+        label: "Client emails lead web notification",
       },
       {
         checked: true,
-        label: "Monthly product updates",
+        label: "Weekly invoice web notification",
       },
       {
         checked: false,
-        label: "Subscribe to newsletter",
+        label: "Lead response web notification",
       },
     ],
   },

@@ -6,19 +6,48 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "@/context/AuthContext/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 
 export function SignIn() {
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { loginWithEmail, loginWithGoogle } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      await loginWithEmail(email, password);
+      navigate("/dashboard/home"); // Redirect after successful login
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await loginWithGoogle();
+      navigate("/dashboard/home"); // Redirect after successful login
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   return (
     <section className="m-8 flex gap-4">
       <div className="w-full lg:w-3/5 mt-24">
         <div className="text-center">
-          <Typography variant="h2" className="font-bold mb-4">Sign In</Typography>
-          
+          <Typography variant="h2" className="font-bold mb-4 text-white">Sign In</Typography>
+          {error && <p className="text-red-500">{error}</p>}
         </div>
         <form className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
           <div className="mb-1 flex flex-col gap-6">
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
+            <Typography variant="small" className="-mb-3 font-medium text-[#fad949]">
               Your email
             </Typography>
             <Input
@@ -28,8 +57,10 @@ export function SignIn() {
               labelProps={{
                 className: "before:content-none after:content-none",
               }}
+              onChange={(e) => setEmail(e.target.value)}
+              required
             />
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
+            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium text-[#fad949]">
               Password
             </Typography>
             <Input
@@ -40,19 +71,20 @@ export function SignIn() {
               labelProps={{
                 className: "before:content-none after:content-none",
               }}
+              onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
           <Checkbox
             label={
               <Typography
                 variant="small"
-                color="gray"
-                className="flex items-center justify-start font-medium"
+                className="flex items-center justify-start font-medium text-white"
               >
                 I agree to&nbsp;
                 <a
                   href="#"
-                  className="font-normal text-black transition-colors hover:text-gray-900 underline"
+                  className="font-normal text-[#fad949] transition-colors hover:text-[#fab959] underline"
                 >
                   Terms and Conditions
                 </a>
@@ -60,31 +92,20 @@ export function SignIn() {
             }
             containerProps={{ className: "-ml-2.5" }}
           />
-          <Button className="mt-6" fullWidth>
+          <Button className="mt-6" fullWidth onClick={handleLogin}>
             Sign In
           </Button>
 
           <div className="flex items-center justify-between gap-2 mt-6">
-            <Checkbox
-              label={
-                <Typography
-                  variant="small"
-                  color="gray"
-                  className="flex items-center justify-start font-medium"
-                >
-                  Subscribe me to newsletter
-                </Typography>
-              }
-              containerProps={{ className: "-ml-2.5" }}
-            />
-            <Typography variant="small" className="font-medium text-gray-900">
+         
+            <Typography variant="small" className="font-medium text-[#fad949]">
               <a href="#">
                 Forgot Password
               </a>
             </Typography>
           </div>
           <div className="space-y-4 mt-8">
-            <Button size="lg" color="white" className="flex items-center gap-2 justify-center shadow-md" fullWidth>
+            <Button size="lg" color="white" className="flex items-center gap-2 justify-center shadow-md" fullWidth onClick={handleGoogleLogin}>
               <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_1156_824)">
                   <path d="M16.3442 8.18429C16.3442 7.64047 16.3001 7.09371 16.206 6.55872H8.66016V9.63937H12.9813C12.802 10.6329 12.2258 11.5119 11.3822 12.0704V14.0693H13.9602C15.4741 12.6759 16.3442 10.6182 16.3442 8.18429Z" fill="#4285F4" />
@@ -104,7 +125,7 @@ export function SignIn() {
           </div>
           <Typography variant="paragraph" className="text-center text-blue-gray-500 font-medium mt-4">
             Not registered?
-            <Link to="/auth/sign-up" className="text-gray-900 ml-1">Create account</Link>
+            <Link to="/auth/sign-up" className="text-[#fad949] underline ml-1">Create account</Link>
           </Typography>
         </form>
 

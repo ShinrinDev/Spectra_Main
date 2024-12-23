@@ -5,8 +5,64 @@ import {
   CardBody,
   Typography,
 } from "@material-tailwind/react";
+import React, { useEffect, useState } from "react";
+import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
+import { useAuth } from "@/context/AuthContext/AuthContext";
 
-export function ProfileInfoCard({ title, description, details, action }) {
+export function ProfileInfoCard({ title, description,data, action }) {
+
+    const firestore = getFirestore();
+    const { user } = useAuth();
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editData, setEditData] = useState({ name: "", surname: "" , phone: "", position: ""});
+    const [successMessage, setSuccessMessage] = useState("");
+   useEffect(() => {
+      const fetchUserData = async () => {
+        if (user?.uid) {
+          try {
+            const userDoc = await getDoc(doc(firestore, "suser", user.uid));
+            if (userDoc.exists()) {
+              setUserData(userDoc.data());
+              setEditData({ name: userDoc.data().name, role: userDoc.data().role });
+              console.log("User Data 2:", userDoc.data())
+            }
+          } catch (error) {
+            console.error("Error fetching user data: ", error);
+          }
+        }
+        setLoading(false);
+      };
+  
+      fetchUserData();
+    }, [user]);
+  
+    console.log("Profile data->>>", userData);
+    const handleOpenDialog = () => {
+      setIsDialogOpen(true);
+      setSuccessMessage("");
+    };
+  
+    const handleCloseDialog = () => {
+      setIsDialogOpen(false);
+    };
+  
+    const handleSave = async () => {
+      if (!user?.uid) return;
+      try {
+        const userRef = doc(firestore, "suser", user.uid);
+        await updateDoc(userRef, {
+          name: editData.name,
+          surname: editData.role,
+        });
+        setUserData({ ...userData, ...editData });
+        setIsDialogOpen(false);
+        setSuccessMessage("Profile updated successfully!");
+      } catch (error) {
+        console.error("Error updating profile: ", error);
+      }
+    };
   return (
     <Card color="transparent" shadow={false}>
       <CardHeader
@@ -20,43 +76,10 @@ export function ProfileInfoCard({ title, description, details, action }) {
         </Typography>
         {action}
       </CardHeader>
-      <CardBody className="p-0">
-        {description && (
-          <Typography
-            variant="small"
-            className="font-normal text-blue-gray-500 dark:text-[#fad949]"
-          >
-            {description}
-          </Typography>
-        )}
-        {description && details ? (
-          <hr className="my-8 border-blue-gray-50" />
-        ) : null}
-        {details && (
-          <ul className="flex flex-col gap-4 p-0">
-            {Object.keys(details).map((el, key) => (
-              <li key={key} className="flex items-center gap-4">
-                <Typography
-                  variant="small"
-                  color="blue-gray"
-                  className="font-semibold capitalize dark:text-white"
-                >
-                  {el}:
-                </Typography>
-                {typeof details[el] === "string" ? (
-                  <Typography
-                    variant="small"
-                    className="font-normal text-blue-gray-500 dark:text-[#fad949]"
-                  >
-                    {details[el]}
-                  </Typography>
-                ) : (
-                  details[el]
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+      <CardBody className="p-0"> 
+        <Typography className="font-normal text-blue-gray-500 dark:text-[#fad949]"><strong className=" text-blue-gray-900 dark:text-white">Phone:</strong> {data.phone || "No Phone Number"}</Typography>
+        <Typography className="font-normal text-blue-gray-500 dark:text-[#fad949]"><strong className=" text-blue-gray-900 dark:text-white">Role:</strong> {data.role || "No Role"}</Typography>
+        <Typography className="font-normal text-blue-gray-500 dark:text-[#fad949]"><strong className=" text-blue-gray-900 dark:text-white">Email:</strong> {data.email || "No Email"}</Typography>
       </CardBody>
     </Card>
   );

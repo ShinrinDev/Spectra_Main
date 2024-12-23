@@ -5,6 +5,7 @@ import {
   InformationCircleIcon,
   ServerStackIcon,
   RectangleStackIcon,
+  DocumentArrowUpIcon,
 } from "@heroicons/react/24/solid";
 import { Key, Shield, Users } from 'lucide-react';
 
@@ -13,6 +14,7 @@ import { SignIn, SignUp } from "@/pages/auth";
 import { PermissionManagement } from "@/admin/PermissionManagement";
 import { RoleManagement } from "@/admin/RoleManagement";
 import { UserManagement } from "@/admin/UserManagement";
+import { element } from "prop-types";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -83,6 +85,12 @@ export const routes = [
         path: "/sign-in",
         element: <SignIn />,
       },
+      {
+        icon:<DocumentArrowUpIcon {...icon}/>,
+        name: "SignUp",
+        path: "/sign-up",
+        element: <SignUp />,
+      }
      
     ],
   },

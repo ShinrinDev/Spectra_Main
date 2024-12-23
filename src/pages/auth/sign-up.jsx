@@ -6,9 +6,53 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import { Link } from "react-router-dom";
+import React,{ useState } from "react";
+import { useAuth } from "@/context/AuthContext/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/firebase";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 
 
 export function SignUp() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [name, setName] = useState(""); // User's name
+  const [surname,setSurname] = useState("");
+  const [phone,setPhone] = useState("");
+  const [position, setPosition] = useState("");
+  const navigate = useNavigate();
+  const firestore = getFirestore();
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      setError("Passwords do not match!");
+      return;
+    }
+    try {
+      // Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Save user details in Firestore
+      await setDoc(doc(firestore, "suser", userCredential.user.uid), {
+        uid: userCredential.user.uid,
+        email,
+        name,
+        surname,
+        phone,
+        position,
+        role: "Viewer", // Default role
+        createdAt: new Date().toISOString(),
+      });
+      console.log("SignUp succesful")
+      navigate("/dashboard/home"); // Redirect after successful sign-up
+    } catch (err) {
+      setError(err.message);
+      console.log("Sign Up Error", error.message);
+    }
+  };
   return (
     <section className="m-8 flex">
             <div className="w-2/5 h-full hidden lg:block">
@@ -19,12 +63,12 @@ export function SignUp() {
       </div>
       <div className="w-full lg:w-3/5 flex flex-col items-center justify-center">
         <div className="text-center">
-          <Typography variant="h2" className="font-bold mb-4">Join Us Today</Typography>
-          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">Enter your email and password to register.</Typography>
+          <Typography variant="h2" className="font-bold mb-4 text-white">Join Us Today</Typography>
+          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal text-[#fad949]">Enter your email and password to register.</Typography>
         </div>
         <form className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2">
           <div className="mb-1 flex flex-col gap-6">
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
+            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium text-white">
               Your email
             </Typography>
             <Input
@@ -34,10 +78,72 @@ export function SignUp() {
               labelProps={{
                 className: "before:content-none after:content-none",
               }}
+              onChange={(e)=> setEmail(e.target.value)}
+              required
             />
           </div>
           <div className="mb-1 flex flex-col gap-6">
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
+            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium text-[#fad949]">
+              Name
+            </Typography>
+            <Input
+              size="lg"
+              placeholder="John"
+              className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
+              labelProps={{
+                className: "before:content-none after:content-none",
+              }}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-1 flex flex-col gap-6">
+            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium text-[#fad949]">
+              Surname
+            </Typography>
+            <Input
+              size="lg"
+              placeholder="Doe"
+              className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
+              labelProps={{
+                className: "before:content-none after:content-none",
+              }}
+              onChange={(e)=>setSurname(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-1 flex flex-col gap-6">
+            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium text-white">
+              Phone
+            </Typography>
+            <Input
+              size="lg"
+              placeholder="01234567890"
+              className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
+              labelProps={{
+                className: "before:content-none after:content-none",
+              }}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-1 flex flex-col gap-6">
+            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium text-white">
+              Position
+            </Typography>
+            <Input
+              size="lg"
+              placeholder="Write position in full"
+              className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
+              labelProps={{
+                className: "before:content-none after:content-none",
+              }}
+              onChange={(e) => setPosition(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-1 flex flex-col gap-6">
+            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium text-[#fad949]">
               Your Password
             </Typography>
             <Input
@@ -47,10 +153,12 @@ export function SignUp() {
               labelProps={{
                 className: "before:content-none after:content-none",
               }}
+              onChange={(e) => setPassword(e.target.value)}
+              required
             />
           </div>
           <div className="mb-1 flex flex-col gap-6">
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
+            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium text-[#fad949]">
               Confirm Password
             </Typography>
             <Input
@@ -60,6 +168,8 @@ export function SignUp() {
               labelProps={{
                 className: "before:content-none after:content-none",
               }}
+              onChange={(e)=>setConfirmPassword(e.target.value)}
+              required
             />
           </div>
           <Checkbox
@@ -72,7 +182,7 @@ export function SignUp() {
                 I agree to&nbsp;
                 <a
                   href="#"
-                  className="font-normal text-black transition-colors hover:text-gray-900 underline"
+                  className="font-normal text-[#fad949]  transition-colors hover:text-[#fab949] underline"
                 >
                   Terms and Conditions
                 </a>
@@ -80,9 +190,11 @@ export function SignUp() {
             }
             containerProps={{ className: "-ml-2.5" }}
           />
-          <Button className="mt-6" fullWidth>
+           {error && <p className="text-red-500">{error}</p>}
+          <Button className="mt-6" fullWidth onClick={handleSignUp}>
             Register Now
           </Button>
+
 
           <div className="space-y-4 mt-8">
             <Button size="lg" color="white" className="flex items-center gap-2 justify-center shadow-md" fullWidth>
@@ -105,7 +217,7 @@ export function SignUp() {
           </div>
           <Typography variant="paragraph" className="text-center text-blue-gray-500 font-medium mt-4">
             Already have an account?
-            <Link to="/auth/sign-in" className="text-gray-900 ml-1">Sign in</Link>
+            <Link to="/auth/sign-in" className="text-[#fad949] ml-1">Sign in</Link>
           </Typography>
         </form>
 

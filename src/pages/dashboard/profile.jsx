@@ -11,6 +11,13 @@ import {
   Switch,
   Tooltip,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  DialogHeader,
+  DialogBody,
 } from "@material-tailwind/react";
 import {
   HomeIcon,
@@ -22,8 +29,81 @@ import { Link } from "react-router-dom";
 import { ProfileInfoCard, MessageCard } from "@/widgets/cards";
 import { platformSettingsData, conversationsData, projectsData } from "@/data";
 import { images } from "@/assets/assets";
+import React, { useEffect, useState } from "react";
+import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
+import { useAuth } from "@/context/AuthContext/AuthContext";
 
 export function Profile() {
+  const firestore = getFirestore();
+  const { user } = useAuth();
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editData, setEditData] = useState({ name: "", surname: "" , phone: "", position: ""});
+  const [successMessage, setSuccessMessage] = useState("");
+
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user?.uid) {
+        try {
+          const userDoc = await getDoc(doc(firestore, "suser", user.uid));
+        //  console.log("User ID: ", user.uid); //works
+          if (userDoc.exists()) {
+            setUserData(userDoc.data());
+            setEditData({ name: userDoc.data().name, role: userDoc.data().role });
+      //console.log("UserData:", userDoc.data()); //gives null.
+
+          } else{
+            console.log("USER DOES NOT EXIST!!!!!")
+          }
+        } catch (error) {
+          console.error("Error fetching user data: ", error);
+        }
+      }
+      setLoading(false);
+
+    };
+
+    fetchUserData();
+  }, [user]);
+
+  console.log("User Data data->", userData)
+  const handleOpenDialog = () => {
+    setIsDialogOpen(true);
+    setSuccessMessage("");
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+  };
+
+  const handleSave = async () => {
+    if (!user?.uid) return;
+    try {
+      const userRef = doc(firestore, "suser", user.uid);
+      await updateDoc(userRef, {
+        name: editData.name,
+        surname: editData.role,
+        phone: editData.phone,
+      });
+      setUserData({ ...userData, ...editData });
+      setIsDialogOpen(false);
+      setSuccessMessage("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile: ", error);
+    }
+  };
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (!userData) {
+    return <p>Loading...</p>;
+  }
+
+
   return (
     <>
       <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover	bg-center">
@@ -42,13 +122,13 @@ export function Profile() {
               />
               <div>
                 <Typography variant="h5" color="blue-gray" className="mb-1 dark:text-white">
-                  Shaun Tsix
+                  {userData.name} {userData.surname}
                 </Typography>
                 <Typography
                   variant="small"
                   className="font-normal text-blue-gray-600 dark:text-[#fad949]"
                 >
-                  CSA / Co-Founder
+                  {userData.position}
                 </Typography>
               </div>
             </div>
@@ -101,15 +181,10 @@ export function Profile() {
             </div>
             <ProfileInfoCard
               title="Profile Information"
-              details={{
-                "first name": "Shaun R. Tsix",
-                mobile: "(+27) 71 958 0312",
-                email: "shauntsiloane@gmail.com",
-                location: "SA",
-              }}
+              data={userData}
               action={
                 <Tooltip content="Edit Profile">
-                  <PencilIcon className="h-4 w-4 cursor-pointer text-blue-gray-500 dark:text-[#fad949]" />
+                  <PencilIcon className="h-4 w-4 cursor-pointer text-blue-gray-500 dark:text-[#fad949]"  onClick={handleOpenDialog}/>
                 </Tooltip>
               }
             />
@@ -207,6 +282,56 @@ export function Profile() {
           </div> */}
         </CardBody>
       </Card>
+
+         {/* Edit Profile Dialog */}
+         <Dialog open={isDialogOpen} handler={handleCloseDialog}>
+  <div className="p-6 bg-white dark:bg-gray-900 rounded-lg shadow-lg">
+    <div className="mb-4">
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Edit Profile Details</h2>
+    </div>
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-[#fad949]">Name:</label>
+        <input
+          type="text"
+          placeholder="Name"
+          className="w-full px-3 py-2 mt-1 dark:text-white dark:bg-blue-gray-800 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-[#fad949]">Surname:</label>
+        <input
+          type="text"
+          placeholder="Surname"
+          className="w-full px-3 py-2 mt-1 dark:bg-blue-gray-900 dark:text-white border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-[#fad949]">Phone:</label>
+        <input
+          type="text"
+          placeholder="0123456790"
+          className="w-full px-3 py-2 mt-1 dark:bg-blue-gray-900 dark:text-white border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+        />
+      </div>
+    </div>
+    <div className="mt-6 flex justify-end space-x-3">
+      <button
+        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-[#fad949] rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        onClick={handleSave}
+      >
+        Save
+      </button>
+      <button
+        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+        onClick={handleCloseDialog}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</Dialog>
+
     </>
   );
 }
