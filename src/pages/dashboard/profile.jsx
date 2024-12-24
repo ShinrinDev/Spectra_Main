@@ -27,7 +27,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 import { ProfileInfoCard, MessageCard } from "@/widgets/cards";
-import { platformSettingsData, conversationsData, projectsData } from "@/data";
+import {  conversationsData, projectsData } from "@/data";
 import { images } from "@/assets/assets";
 import React, { useEffect, useState } from "react";
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
@@ -42,17 +42,40 @@ export function Profile() {
   const [editData, setEditData] = useState({ name: "", surname: "" , phone: "", position: ""});
   const [successMessage, setSuccessMessage] = useState("");
 
+  const [platformSettings, setPlatformSettings] = useState([]);
+
+
+const fetchPlatformSettings = async (userId) => {
+  try {
+    const docRef = doc(firestore, "userSettings", userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      console.log("Platform Settings:", docSnap.data().platformSettings);
+      return docSnap.data().platformSettings;
+    } else {
+      console.log("No platform settings found!");
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching platform settings:", error);
+  }
+};
+
+// Call the function with a user ID
+;
+
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (user?.uid) {
         try {
           const userDoc = await getDoc(doc(firestore, "suser", user.uid));
-        //  console.log("User ID: ", user.uid); //works
+          const data = await fetchPlatformSettings(user.uid);
+          setPlatformSettings(data);
           if (userDoc.exists()) {
             setUserData(userDoc.data());
             setEditData({ name: userDoc.data().name, role: userDoc.data().role });
-      //console.log("UserData:", userDoc.data()); //gives null.
+      
 
           } else{
             console.log("USER DOES NOT EXIST!!!!!")
@@ -94,6 +117,33 @@ export function Profile() {
       console.error("Error updating profile: ", error);
     }
   };
+
+  const handleToggle = async (title, optionIndex) => {
+    const updatedSettings = platformSettings.map((setting) =>
+      setting.title === title
+        ? {
+            ...setting,
+            options: setting.options.map((option, index) =>
+              index === optionIndex
+                ? { ...option, checked: !option.checked }
+                : option
+            ),
+          }
+        : setting
+    );
+
+    setPlatformSettings(updatedSettings);
+
+    // Update Firestore
+    try {
+      const docRef = doc(firestore, "userSettings", user.uid);
+      await updateDoc(docRef, { platformSettings: updatedSettings });
+      console.log("Platform settings updated successfully");
+    } catch (error) {
+      console.error("Error updating platform settings:", error);
+    }
+  };
+
 
   if (loading) {
     return <p>Loading...</p>;
@@ -157,26 +207,27 @@ export function Profile() {
                 Platform Settings
               </Typography>
               <div className="flex flex-col gap-12">
-                {platformSettingsData.map(({ title, options }) => (
-                  <div key={title}>
-                    <Typography className="mb-4 block text-xs font-semibold uppercase text-blue-gray-500 dark:text-white">
-                      {title} 
-                    </Typography>
-                    <div className="flex flex-col gap-6">
-                      {options.map(({ checked, label }) => (
-                        <Switch
-                          key={label}
-                          id={label}
-                          label={label}
-                          defaultChecked={checked}
-                          labelProps={{
-                            className: "text-sm font-normal text-blue-gray-500 dark:text-[#fad949]",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
+              {platformSettings.map(({ title, options }) => (
+        <div key={title} className="mb-6">
+          <Typography className="mb-4 block text-xs font-semibold uppercase text-blue-gray-500 dark:text-white">
+            {title}
+          </Typography>
+          <div className="flex flex-col gap-6">
+            {options.map(({ checked, label }, optionIndex) => (
+              <Switch
+                key={label}
+                id={label}
+                label={label}
+                defaultChecked={checked}
+                onChange={() => handleToggle(title, optionIndex)}
+                classes={{
+                  root: "text-sm font-normal text-blue-gray-500 dark:text-[#fad949]",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
               </div>
             </div>
             <ProfileInfoCard

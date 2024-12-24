@@ -25,6 +25,36 @@ export function SignUp() {
   const [position, setPosition] = useState("");
   const navigate = useNavigate();
   const firestore = getFirestore();
+
+  const platformSettingsData = [
+    {
+      title: "account",
+      options: [
+        { checked: true, label: "Email me when a client emails a lead" },
+        { checked: false, label: "Email me weekly invoices" },
+        { checked: true, label: "Email me when a lead responds" },
+      ],
+    },
+    {
+      title: "application",
+      options: [
+        { checked: false, label: "Client emails lead web notification" },
+        { checked: true, label: "Weekly invoice web notification" },
+        { checked: false, label: "Lead response web notification" },
+      ],
+    },
+  ];
+  
+const savePlatformSettings = async (userId) => {
+  try {
+    const docRef = doc(firestore, "userSettings", userId);
+    await setDoc(docRef, { platformSettings: platformSettingsData });
+    console.log("Platform settings saved successfully!");
+  } catch (error) {
+    console.error("Error saving platform settings:", error);
+  }
+};
+
   const handleSignUp = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
@@ -45,9 +75,12 @@ export function SignUp() {
         position,
         role: "Viewer", // Default role
         createdAt: new Date().toISOString(),
+        status: "inactive", //Default status
       });
+
+      savePlatformSettings(userCredential.user.uid);
       console.log("SignUp succesful")
-      navigate("/dashboard/home"); // Redirect after successful sign-up
+      navigate("/auth/sign-in"); // Redirect after successful sign-up
     } catch (err) {
       setError(err.message);
       console.log("Sign Up Error", error.message);
