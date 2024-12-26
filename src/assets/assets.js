@@ -25,10 +25,16 @@ import lead8 from "./lead9.jpeg";
 import profilePic from "./me.JPG"
 import logo from "./spectra_logo.png"
 
+import A from "./profile_A.jpg"
+import E from "./profile_E.jpg"
+import V from "./profile_V.webp"
+import S from "./profile_S.webp"
+
 export const images = {
 
-    profilePic,
-    logo,
+  profilePic,
+  logo,
+  E,A,V,S,
   person1,
   person2,
   person3,

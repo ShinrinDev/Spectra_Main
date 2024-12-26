@@ -30,10 +30,15 @@ import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { Line, Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Legend,ArcElement  } from "chart.js";
+import { useAuth } from "@/context/AuthContext/AuthContext";
+import { doc, getFirestore } from "firebase/firestore";
+import { getDoc } from "firebase/firestore";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Legend, ArcElement);
 
 export function Tables() {
+  const {user} = useAuth();
+  const firestore = getFirestore();
   const [openModal, setOpenModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [openClientModal, setOpenClientModal] = useState(false);
@@ -45,6 +50,7 @@ export function Tables() {
   const [CurrentClient,setCurrentClient] = useState("");
 const [ShowStatsModal,setShowStatsModal] = useState(false);
 const [documents, setDocuments] = useState(selectedClient?.documents || []);
+const [selectedBank, setSelectedBank] = useState("");
 
 
 const [thirdParty, setThirdParty] = useState([
@@ -55,6 +61,31 @@ const [showEmailsModal, setShowEmailsModal] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [replyContent, setReplyContent] = useState("");
 
+  const [Role, setRole] = useState("")
+
+
+
+  useEffect(() =>{
+      const fetchUserData = async () =>{
+    if(user?.uid){
+      try{
+        const userDoc = await getDoc(doc(firestore,"suser",user.uid));
+        if(userDoc.exists()){
+          setRole(userDoc.data().role);
+        } else{
+          console.log("You fucked up!!!!!")
+        }
+
+      } catch(error){
+        console.error("Some Error fetching user data: ", error);
+      }
+    }
+  }
+
+  fetchUserData();
+  }, [user]);
+
+  console.log("User Role for invoice:", Role);
   // Dummy email data
   const emails = [
     {
@@ -79,6 +110,31 @@ const [showEmailsModal, setShowEmailsModal] = useState(false);
       flagged: false,
     },
   ];
+  const handleBankChange = (e) => {
+    setSelectedBank(e.target.value);
+  };
+
+  const saveBankDetails = async () => {
+    if (!selectedBank) {
+      alert("Please select a bank before saving.");
+      return;
+    }
+
+    try {
+      const bankDetails = {
+        bankName: selectedBank,
+        accountNumber: "1234567890", // Replace with actual details
+        routingNumber: "987654321", // Replace with actual details
+      };
+
+      const userDocRef = doc(firestore, "userBankDetails", selectedClient.id); // Adjust path
+      await updateDoc(userDocRef, { bankDetails });
+
+      alert("Bank details saved successfully!");
+    } catch (error) {
+      console.error("Error saving bank details: ", error);
+    }
+  };
 
   const handleReply = () => {
     if (replyContent.trim()) {
@@ -691,14 +747,17 @@ const handleCloseStatsModal = () => {
                     </td>
               <td className={className}>
                 <div className="flex gap-2">
-                  <Button
+                {/* The invoice button*/}
+
+                {Role === "Admin" &&  <Button
                     size="sm"
                     variant="gradient"
                     color="#fad949"
                     onClick={() => handleFinanceClick(clients)}
                   >
                     Invoice
-                  </Button>
+                  </Button>}
+                 
                   <Button
                     size="sm"
                     variant="text"
@@ -1018,12 +1077,41 @@ const handleCloseStatsModal = () => {
         {selectedClient && (
           <div>
             <Typography variant="h6">Invoices for {selectedClient.name}</Typography>
+            {/* Bank Selection */}
+            <div className="mt-4">
+              <Typography variant="h6">Select Bank</Typography>
+              <select
+                className="w-full p-2 border rounded"
+                value={selectedBank}
+                onChange={handleBankChange}
+              >
+                <option value="" disabled>
+                  -- Select Bank --
+                </option>
+                <option value="Bank A">Bank A</option>
+                <option value="Bank B">Bank B</option>
+                <option value="Bank C">Bank C</option>
+              </select>
+              <Button className="mt-4" onClick={saveBankDetails}>
+                Save Bank Details
+              </Button>
+            </div>
+
+            {/* Existing Invoices */}
             {selectedClient.invoices.map((invoice) => (
               <div key={invoice.id} className="border p-2 mb-2 rounded">
-                <Typography><strong>Service:</strong> {invoice.service}</Typography>
-                <Typography><strong>Amount:</strong> {invoice.amount}</Typography>
-                <Typography><strong>Status:</strong> {invoice.status}</Typography>
-                <Typography><strong>Due Date:</strong> {invoice.dueDate}</Typography>
+                <Typography>
+                  <strong>Service:</strong> {invoice.service}
+                </Typography>
+                <Typography>
+                  <strong>Amount:</strong> {invoice.amount}
+                </Typography>
+                <Typography>
+                  <strong>Status:</strong> {invoice.status}
+                </Typography>
+                <Typography>
+                  <strong>Due Date:</strong> {invoice.dueDate}
+                </Typography>
                 <Button
                   size="sm"
                   color="blue-gray"
@@ -1038,13 +1126,19 @@ const handleCloseStatsModal = () => {
             {/* Weekly Summary */}
             <div className="mt-6 border-t pt-4">
               <Typography variant="h6">Weekly Summary</Typography>
-              <Typography><strong>Total Invoices:</strong> {selectedClient.invoices.length}</Typography>
               <Typography>
-                <strong>Total Amount:</strong> £
-                {selectedClient.invoices.reduce((total, invoice) => total + parseFloat(invoice.amount), 0).toFixed(2)}
+                <strong>Total Invoices:</strong> {selectedClient.invoices.length}
               </Typography>
               <Typography>
-                <strong>Invoice Names:</strong> {selectedClient.invoices.map((invoice) => invoice.service).join(", ")}
+                <strong>Total Amount:</strong> £
+                {selectedClient.invoices.reduce(
+                  (total, invoice) => total + parseFloat(invoice.amount),
+                  0
+                ).toFixed(2)}
+              </Typography>
+              <Typography>
+                <strong>Invoice Names:</strong>{" "}
+                {selectedClient.invoices.map((invoice) => invoice.service).join(", ")}
               </Typography>
               <Button
                 size="sm"
@@ -1054,33 +1148,6 @@ const handleCloseStatsModal = () => {
               >
                 Export Weekly Summary as PDF
               </Button>
-            </div>
-
-            {/* New Invoice Form */}
-            <div className="mt-4">
-              <Typography variant="h6">Create New Invoice</Typography>
-              <div className="grid gap-4">
-                <Input
-                  label="Service"
-                  name="service"
-                  value={newInvoice.service}
-                  onChange={handleNewInvoiceChange}
-                />
-                <Input
-                  label="Amount"
-                  name="amount"
-                  value={newInvoice.amount}
-                  onChange={handleNewInvoiceChange}
-                />
-                <Input
-                  label="Due Date"
-                  name="dueDate"
-                  type="date"
-                  value={newInvoice.dueDate}
-                  onChange={handleNewInvoiceChange}
-                />
-                <Button onClick={createNewInvoice}>Add Invoice</Button>
-              </div>
             </div>
           </div>
         )}

@@ -41,6 +41,18 @@ export function Profile() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editData, setEditData] = useState({ name: "", surname: "" , phone: "", position: ""});
   const [successMessage, setSuccessMessage] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    surname: "",
+  });
+  const [avatarSrc,setAvatarSrc] = useState(images.S);
+   const roleAvatars = {
+    Admin: images.A,
+    Editor: images.E,
+    Viewer: images.V,
+  };
+
 
   const [platformSettings, setPlatformSettings] = useState([]);
 
@@ -75,7 +87,7 @@ const fetchPlatformSettings = async (userId) => {
           if (userDoc.exists()) {
             setUserData(userDoc.data());
             setEditData({ name: userDoc.data().name, role: userDoc.data().role });
-      
+            setAvatarSrc(roleAvatars[userDoc.data().role])
 
           } else{
             console.log("USER DOES NOT EXIST!!!!!")
@@ -144,6 +156,42 @@ const fetchPlatformSettings = async (userId) => {
     }
   };
 
+  const updateUserDetails = async (uid, updatedFields) => {
+    try {
+      // Filter out empty fields
+      const fieldsToUpdate = Object.entries(updatedFields).reduce((acc, [key, value]) => {
+        if (value !== "" && value !== undefined && value !== null) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+  
+      if (Object.keys(fieldsToUpdate).length === 0) {
+        console.log("No fields to update.");
+        return;
+      }
+  
+      const userDocRef = doc(firestore, "suser", uid);
+      await updateDoc(userDocRef, fieldsToUpdate);
+  
+      console.log("User details updated successfully.");
+    } catch (error) {
+      console.error("Error updating user details: ", error);
+    }
+  };
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (user?.uid) {
+      await updateUserDetails(user.uid, formData);
+      alert("Profile updated successfully!");
+    }
+  };
+
 
   if (loading) {
     return <p>Loading...</p>;
@@ -164,7 +212,7 @@ const fetchPlatformSettings = async (userId) => {
           <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
             <div className="flex items-center gap-6">
               <Avatar
-                src={images.profilePic}
+                src={avatarSrc}
                 alt="bruce-mars"
                 size="xl"
                 variant="rounded"
@@ -346,6 +394,9 @@ const fetchPlatformSettings = async (userId) => {
         <input
           type="text"
           placeholder="Name"
+          value={formData.name}
+          name="name"
+          onChange={handleChange}
           className="w-full px-3 py-2 mt-1 dark:text-white dark:bg-blue-gray-800 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
         />
       </div>
@@ -354,6 +405,9 @@ const fetchPlatformSettings = async (userId) => {
         <input
           type="text"
           placeholder="Surname"
+          value={formData.surname}
+          name="surname"
+          onChange={handleChange}
           className="w-full px-3 py-2 mt-1 dark:bg-blue-gray-900 dark:text-white border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
         />
       </div>
@@ -362,6 +416,9 @@ const fetchPlatformSettings = async (userId) => {
         <input
           type="text"
           placeholder="0123456790"
+          value={formData.phone}
+          name="phone"
+          onChange={handleChange}
           className="w-full px-3 py-2 mt-1 dark:bg-blue-gray-900 dark:text-white border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
         />
       </div>
@@ -369,7 +426,7 @@ const fetchPlatformSettings = async (userId) => {
     <div className="mt-6 flex justify-end space-x-3">
       <button
         className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-[#fad949] rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        onClick={handleSave}
+        onClick={handleSubmit}
       >
         Save
       </button>
