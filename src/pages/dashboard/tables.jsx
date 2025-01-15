@@ -1,43 +1,39 @@
-import React,{useState,useEffect, useRef } from "react";
+import { images } from "@/assets/assets";
+import { authorsTableData, projectsTableData } from "@/data";
 import {
-  Card,
-  CardHeader,
-  CardBody,
-  Typography,
   Avatar,
-  Chip,
-  Tooltip,
-  Progress,
-  IconButton,
-  Menu,
-  MenuHandler,
-  MenuList,
-  MenuItem,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
   Dialog,
-  DialogHeader,
   DialogBody,
   DialogFooter,
-  Button,
+  DialogHeader,
   Input,
+  Menu,
+  MenuHandler,
+  MenuItem,
+  MenuList,
   Textarea,
+  Tooltip,
+  Typography
 } from "@material-tailwind/react";
-import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-import { authorsTableData, projectsTableData } from "@/data";
 import { jsPDF } from "jspdf";
-import { images } from "@/assets/assets";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import { useEffect, useRef, useState } from "react";
+import { MapContainer, Marker, TileLayer } from "react-leaflet";
 //import Chart from "chart.js/auto";
-import "leaflet/dist/leaflet.css";
-import { Line, Doughnut } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Legend,ArcElement  } from "chart.js";
+import EmailGenerationDialog from "@/components/dialogs/EmailGenerationDialog";
 import { useAuth } from "@/context/AuthContext/AuthContext";
-import { doc, getFirestore } from "firebase/firestore";
-import { getDoc } from "firebase/firestore";
+import { ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title } from "chart.js";
+import { doc, getDoc, getFirestore } from "firebase/firestore";
+import "leaflet/dist/leaflet.css";
+import { Ellipsis } from "lucide-react";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Legend, ArcElement);
 
 export function Tables() {
-  const {user} = useAuth();
+  const { user } = useAuth();
   const firestore = getFirestore();
   const [openModal, setOpenModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -46,18 +42,18 @@ export function Tables() {
   const [newInvoice, setNewInvoice] = useState({ service: "", amount: "", dueDate: "" });
   const [selectedPerson, setSelectedPerson] = useState(null); // State for selected person
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State for dialog visibility
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); 
-  const [CurrentClient,setCurrentClient] = useState("");
-const [ShowStatsModal,setShowStatsModal] = useState(false);
-const [documents, setDocuments] = useState(selectedClient?.documents || []);
-const [selectedBank, setSelectedBank] = useState("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [CurrentClient, setCurrentClient] = useState("");
+  const [ShowStatsModal, setShowStatsModal] = useState(false);
+  const [documents, setDocuments] = useState(selectedClient?.documents || []);
+  const [selectedBank, setSelectedBank] = useState("");
 
 
-const [thirdParty, setThirdParty] = useState([
-  { id: 1, link: selectedClient?.thirdParty?.[0] || "thirdParty link" },
-  
-]);
-const [showEmailsModal, setShowEmailsModal] = useState(false);
+  const [thirdParty, setThirdParty] = useState([
+    { id: 1, link: selectedClient?.thirdParty?.[0] || "thirdParty link" },
+
+  ]);
+  const [showEmailsModal, setShowEmailsModal] = useState(false);
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [replyContent, setReplyContent] = useState("");
 
@@ -65,24 +61,24 @@ const [showEmailsModal, setShowEmailsModal] = useState(false);
 
 
 
-  useEffect(() =>{
-      const fetchUserData = async () =>{
-    if(user?.uid){
-      try{
-        const userDoc = await getDoc(doc(firestore,"suser",user.uid));
-        if(userDoc.exists()){
-          setRole(userDoc.data().role);
-        } else{
-          console.log("You fucked up!!!!!")
-        }
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user?.uid) {
+        try {
+          const userDoc = await getDoc(doc(firestore, "suser", user.uid));
+          if (userDoc.exists()) {
+            setRole(userDoc.data().role);
+          } else {
+            console.log("You fucked up!!!!!")
+          }
 
-      } catch(error){
-        console.error("Some Error fetching user data: ", error);
+        } catch (error) {
+          console.error("Some Error fetching user data: ", error);
+        }
       }
     }
-  }
 
-  fetchUserData();
+    fetchUserData();
   }, [user]);
 
   console.log("User Role for invoice:", Role);
@@ -152,43 +148,43 @@ const [showEmailsModal, setShowEmailsModal] = useState(false);
   };
 
 
-const [resources, setResources] = useState([]);
-  
-// State for tracking the currently edited resource
-const [editingResource, setEditingResource] = useState(null);
+  const [resources, setResources] = useState([]);
+
+  // State for tracking the currently edited resource
+  const [editingResource, setEditingResource] = useState(null);
 
 
 
   // Function to handle adding new resource
-// Function to handle changes in the resource name
-const handleResourceNameChange = (index, newName) => {
-  setResources((prevResources) => {
-    const updatedResources = [...prevResources];
-    updatedResources[index].name = newName;
-    return updatedResources;
-  });
-};
-
-// Function to handle changes in the resource content
-const handleResourceContentChange = (index, newContent) => {
-  setResources((prevResources) => {
-    const updatedResources = [...prevResources];
-    updatedResources[index].content = newContent;
-    return updatedResources;
-  });
-};
-
-// Function to handle adding a new resource
-const handleAddResource = () => {
-  const newResource = {
-    id: Date.now(), // Unique ID for the resource
-    name: "", // Default empty name
-    content: "", // Default empty content
+  // Function to handle changes in the resource name
+  const handleResourceNameChange = (index, newName) => {
+    setResources((prevResources) => {
+      const updatedResources = [...prevResources];
+      updatedResources[index].name = newName;
+      return updatedResources;
+    });
   };
-  setResources((prevResources) => [...prevResources, newResource]);
-  setEditingResource(resources.length); // Automatically edit the newly added resource
-};
- 
+
+  // Function to handle changes in the resource content
+  const handleResourceContentChange = (index, newContent) => {
+    setResources((prevResources) => {
+      const updatedResources = [...prevResources];
+      updatedResources[index].content = newContent;
+      return updatedResources;
+    });
+  };
+
+  // Function to handle adding a new resource
+  const handleAddResource = () => {
+    const newResource = {
+      id: Date.now(), // Unique ID for the resource
+      name: "", // Default empty name
+      content: "", // Default empty content
+    };
+    setResources((prevResources) => [...prevResources, newResource]);
+    setEditingResource(resources.length); // Automatically edit the newly added resource
+  };
+
   // Function to handle adding new third-party link
   const handleAddThirdParty = () => {
     const newParty = { id: Date.now(), name: "", link: "" };
@@ -248,68 +244,68 @@ const handleAddResource = () => {
     const fileURL = URL.createObjectURL(doc.file);
     window.open(fileURL, "_blank");
   };
-  
+
   const lineChartRef = useRef(null);
-const doughnutChartRef = useRef(null);
-const handleStatsClick = (client) => {
-  setCurrentClient(client);
-  setShowStatsModal(true);
-};
-useEffect(() => {
-  if (CurrentClient) {
-    // Initialize Lead Response Performance Chart
-    const ctxLine = lineChartRef.current.getContext('2d');
-    new ChartJS(ctxLine, {
-      type: 'line',
-      data: {
-        labels: CurrentClient.leadResponseDates,  // Use the dates from the client
-        datasets: [{
-          label: 'Lead Response Performance',
-          data: CurrentClient.leadResponseValues,  // Use the response values from the client
-          fill: false,
-          borderColor: 'rgba(75, 192, 192, 1)',
-          tension: 0.1
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Lead Response Over Time'
+  const doughnutChartRef = useRef(null);
+  const handleStatsClick = (client) => {
+    setCurrentClient(client);
+    setShowStatsModal(true);
+  };
+  useEffect(() => {
+    if (CurrentClient) {
+      // Initialize Lead Response Performance Chart
+      const ctxLine = lineChartRef.current.getContext('2d');
+      new ChartJS(ctxLine, {
+        type: 'line',
+        data: {
+          labels: CurrentClient.leadResponseDates,  // Use the dates from the client
+          datasets: [{
+            label: 'Lead Response Performance',
+            data: CurrentClient.leadResponseValues,  // Use the response values from the client
+            fill: false,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: 'Lead Response Over Time'
+            }
           }
         }
-      }
-    });
+      });
 
-    // Initialize Targeted Industries Doughnut Chart
-    const ctxDoughnut = doughnutChartRef.current.getContext('2d');
-    new ChartJS(ctxDoughnut, {
-      type: 'doughnut',
-      data: {
-        labels: CurrentClient.targetedIndustries,  // Use the industries from the client
-        datasets: [{
-          label: 'Targeted Industries',
-          data: CurrentClient.targetedIndustriesValues,  // Use the values from the client
-          backgroundColor: ['#FF5733', '#33FF57', '#3357FF', '#FFC300', '#DAF7A6'], // Customize colors
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Targeted Industries'
+      // Initialize Targeted Industries Doughnut Chart
+      const ctxDoughnut = doughnutChartRef.current.getContext('2d');
+      new ChartJS(ctxDoughnut, {
+        type: 'doughnut',
+        data: {
+          labels: CurrentClient.targetedIndustries,  // Use the industries from the client
+          datasets: [{
+            label: 'Targeted Industries',
+            data: CurrentClient.targetedIndustriesValues,  // Use the values from the client
+            backgroundColor: ['#FF5733', '#33FF57', '#3357FF', '#FFC300', '#DAF7A6'], // Customize colors
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: 'Targeted Industries'
+            }
           }
         }
-      }
-    });
-  }
-}, [CurrentClient]);
+      });
+    }
+  }, [CurrentClient]);
 
-const handleCloseStatsModal = () => {
-  setShowStatsModal(false);
-};
+  const handleCloseStatsModal = () => {
+    setShowStatsModal(false);
+  };
 
 
   const handleEditDetails = (person) => {
@@ -372,21 +368,21 @@ const handleCloseStatsModal = () => {
 
   // PDF Export function for invoices
 
-  const exportInvoiceAsPDF = async (invoice,selectedClient) => {
+  const exportInvoiceAsPDF = async (invoice, selectedClient) => {
     const doc = new jsPDF();
-  
+
     // Add the logo (if available)
-   /* if (logoUrl) {
-      doc.addImage(images.logo, "PNG", 10, 10, 50, 30);
-    }*/
-  
+    /* if (logoUrl) {
+       doc.addImage(images.logo, "PNG", 10, 10, 50, 30);
+     }*/
+
     // Header: Company Details
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text("Spectra Acquisition", 30, 20, { align: "center" });
-  
+
     doc.setFont("helvetica", "normal");
-  
+
     // Invoice Number and Dates
     doc.setFontSize(12);
     doc.text(`Invoice: ${invoice.id}`, 150, 20);
@@ -395,42 +391,42 @@ const handleCloseStatsModal = () => {
 
 
     doc.setFont("helvetica", "bold");
-    doc.text("From:", 10,50);
+    doc.text("From:", 10, 50);
     doc.setFontSize(12);
-    doc.setFont("helvetic","normal");
+    doc.setFont("helvetic", "normal");
     doc.text("Spectra Acquisition", 10, 58);
     doc.text("zane@spectraacquisition.com", 10, 66);
-    doc.text("+447418355227",10,74);
-    doc.text("spectraacquisition.com",10, 82);
-  
+    doc.text("+447418355227", 10, 74);
+    doc.text("spectraacquisition.com", 10, 82);
+
     // Recipient Details
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text("To:", 120, 50);
     doc.setFont("helvetica", "normal");
     doc.text(selectedClient.name, 120, 58);
-    doc.text(selectedClient.contactPerson, 120,66)
+    doc.text(selectedClient.contactPerson, 120, 66)
     doc.text(selectedClient.email, 120, 74);
     doc.text(selectedClient.phone, 120, 82);
     doc.text(selectedClient.address, 120, 90);
 
 
     doc.setFont("helvetic", "bold");
-    doc.text("Remarks",10,100);
+    doc.text("Remarks", 10, 100);
     doc.setFont("helvetica", "normal");
-    doc.text("Bank name:",10,108);
-    doc.text("Barclays",10,116);
-    doc.text("Sort code:",10,126);
-    doc.text("231486",10,134);
-    doc.text("Account number:",10,142);
-    doc.text("15167151",10,150);
-    doc.text("Beneficiary name:",10,158);
-    doc.text("Zane Czepek",10,166);
-    doc.text("067 718 3670",10,176);
+    doc.text("Bank name:", 10, 108);
+    doc.text("Barclays", 10, 116);
+    doc.text("Sort code:", 10, 126);
+    doc.text("231486", 10, 134);
+    doc.text("Account number:", 10, 142);
+    doc.text("15167151", 10, 150);
+    doc.text("Beneficiary name:", 10, 158);
+    doc.text("Zane Czepek", 10, 166);
+    doc.text("067 718 3670", 10, 176);
     // Separator Line
     doc.setDrawColor(150);
     doc.line(10, 185, 200, 185);
-  
+
     // Product Table Header
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
@@ -440,7 +436,7 @@ const handleCloseStatsModal = () => {
     doc.text("Tax", 130, 195);
     doc.text("Total", 160, 195);
 
-  
+
     // Product Table Content
     let y = 235;
     /*doc.setFont("helvetica", "normal");
@@ -452,7 +448,7 @@ const handleCloseStatsModal = () => {
       doc.text(`£ ${invoice.amount.toFixed(2)}`, 160, y);
       y += 10;
     });*/
-  
+
     // Invoice Summary
     y += 10;
     doc.setFont("helvetica", "bold");
@@ -462,21 +458,21 @@ const handleCloseStatsModal = () => {
     doc.text(`Subtotal: £ ${invoice.amount.toFixed(2)}`, 10, y);
     doc.text(`Tax: £ ${invoice.tax.toFixed(2)}`, 10, y + 10);
     doc.text(`Total: £ ${invoice.amount.toFixed(2)}`, 10, y + 20);
-  
+
     // Remarks Section
     y += 40;
-    
+
     // Footer
     doc.setFont("helvetica", "italic");
     doc.setFontSize(10);
     doc.text("Thank you for choosing Spectra Acquisition!", 105, 280, { align: "center" });
-   
-  
+
+
     // Save the PDF
     doc.save(`Invoice_${invoice.id}.pdf`);
   };
 
-  
+
   const exportWeeklySummaryAsPDF = async (client) => {
     const doc = new jsPDF();
 
@@ -495,10 +491,10 @@ const handleCloseStatsModal = () => {
     doc.setFont("helvetica", "bold");
     doc.text("From:", u, x);
     doc.setFont("helvetica", "normal");
-    doc.text("Spectra Acquisition", u, x +8);
-    doc.text("zane@spectraacquisition.com", u, x+16);
-    doc.text("+447418355227",u,x+24);
-    doc.text("spectraacquisition.com",u, x+32);
+    doc.text("Spectra Acquisition", u, x + 8);
+    doc.text("zane@spectraacquisition.com", u, x + 16);
+    doc.text("+447418355227", u, x + 24);
+    doc.text("spectraacquisition.com", u, x + 32);
 
     let k = 140;
     // Recipient Details
@@ -506,9 +502,9 @@ const handleCloseStatsModal = () => {
     doc.text("To:", k, x);
     doc.setFont("helvetica", "normal");
     doc.text(client.name, k, x + 8);
-    doc.text(client.contactPerson || '', k, x+16);
-    doc.text(client.email || '', k, x+24);
-    doc.text(client.phone || '', k, x+32);
+    doc.text(client.contactPerson || '', k, x + 16);
+    doc.text(client.email || '', k, x + 24);
+    doc.text(client.phone || '', k, x + 32);
 
     // Separator Line
     doc.setDrawColor(150);
@@ -534,7 +530,7 @@ const handleCloseStatsModal = () => {
     // Products Row
     doc.setFont("helvetica", "normal");
     doc.text(client.invoices.map((invoice) => invoice.service).join(", "), 10, y);
-    doc.text(`${totalInvoices}`, 115, y,{ align: "center" });
+    doc.text(`${totalInvoices}`, 115, y, { align: "center" });
     doc.text("£ 600", 140, y);
     doc.text(`£ ${tax.toFixed(2)}`, 160, y);
     doc.text(`£ ${totalWithTax.toFixed(2)}`, 185, y);
@@ -552,7 +548,7 @@ const handleCloseStatsModal = () => {
 
     // Save the PDF
     doc.save(`Weekly_Summary_${client.name}.pdf`);
-};
+  };
 
   // Handle new invoice creation
   const handleNewInvoiceChange = (e) => {
@@ -585,7 +581,7 @@ const handleCloseStatsModal = () => {
 
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
-     <Card className="dark:bg-gray-900">
+      <Card className="dark:bg-gray-900">
         <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
           <Typography variant="h6" color="white">
             Clients Contact Person
@@ -612,11 +608,10 @@ const handleCloseStatsModal = () => {
             </thead>
             <tbody>
               {authorsTableData.map((person, key) => {
-                const className = `py-3 px-5 ${
-                  key === authorsTableData.length - 1
-                    ? ""
-                    : "border-b border-blue-gray-50"
-                }`;
+                const className = `py-3 px-5 ${key === authorsTableData.length - 1
+                  ? ""
+                  : "border-b border-blue-gray-50"
+                  }`;
 
                 return (
                   <tr key={person.name}>
@@ -673,68 +668,69 @@ const handleCloseStatsModal = () => {
         </CardBody>
       </Card>
       <Card className="dark:bg-gray-900">
-  <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-    <Typography variant="h6" color="white">
-      Client's Leads
-    </Typography>
-  </CardHeader>
-  <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-    <table className="w-full min-w-[640px] table-auto">
-      <thead>
-        <tr>
-          {["Companies", "Leads", "Stats", "Actions"].map((el) => (
-            <th
-              key={el}
-              className="border-b border-blue-gray-50 py-3 px-5 text-left"
-            >
-              <Typography
-                variant="small"
-                className="text-[11px] font-bold uppercase text-blue-gray-400 dark:text-white"
-              >
-                {el}
-              </Typography>
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {projectsTableData.map((clients, key) => {
-          const className = `py-3 px-5 ${
-            key === projectsTableData.length - 1
-              ? ""
-              : "border-b border-blue-gray-50"
-          }`;
-
-          return (
-            <tr key={clients.name}>
-              <td className={className}>
-                <div className="flex items-center gap-4">
-                  <Avatar src={clients.img} alt={clients.name} size="sm" />
-                  <Typography
-                    variant="small"
-                    color="blue-gray"
-                    className="font-bold dark:text-[#fad949]"
+        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+          <Typography variant="h6" color="white">
+            Client's Leads
+          </Typography>
+        </CardHeader>
+        <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+          <table className="w-full min-w-[640px] table-auto">
+            <thead>
+              <tr>
+                {["Companies", "Leads", "Stats", "Actions"].map((el) => (
+                  <th
+                    key={el}
+                    className="border-b border-blue-gray-50 py-3 px-5 text-left"
                   >
-                    {clients.name}
-                  </Typography>
-                </div>
-              </td>
-              <td className={className}>
-                {clients.members.map(({ img, name }, key) => (
-                  <Tooltip key={name} content={name}>
-                    <Avatar
-                      src={img}
-                      alt={name}
-                      size="xs"
-                      variant="circular"
-                      className={`cursor-pointer border-2 border-white ${
-                        key === 0 ? "" : "-ml-2.5"
-                      }`}
-                    />
-                  </Tooltip>
+                    <Typography
+                      variant="small"
+                      className="text-[11px] font-bold uppercase text-blue-gray-400 dark:text-white"
+                    >
+                      {el}
+                    </Typography>
+                  </th>
                 ))}
-              </td>
-           
+              </tr>
+            </thead>
+            <tbody>
+              {projectsTableData.map((clients, key) => {
+                const className = `py-3 px-5 ${key === projectsTableData.length - 1
+                  ? ""
+                  : "border-b border-blue-gray-50"
+                  }`;
+
+                const [isEmailGenDialogOpen, setIsEmailGenDialogOpen] = useState(false);
+                const handleEmailGenDialogOpen = () => setIsEmailGenDialogOpen(!isEmailGenDialogOpen);
+
+                return (
+                  <tr key={clients.name}>
+                    <td className={className}>
+                      <div className="flex items-center gap-4">
+                        <Avatar src={clients.img} alt={clients.name} size="sm" />
+                        <Typography
+                          variant="small"
+                          color="blue-gray"
+                          className="font-bold dark:text-[#fad949]"
+                        >
+                          {clients.name}
+                        </Typography>
+                      </div>
+                    </td>
+                    <td className={className}>
+                      {clients.members.map(({ img, name }, key) => (
+                        <Tooltip key={name} content={name}>
+                          <Avatar
+                            src={img}
+                            alt={name}
+                            size="xs"
+                            variant="circular"
+                            className={`cursor-pointer border-2 border-white ${key === 0 ? "" : "-ml-2.5"
+                              }`}
+                          />
+                        </Tooltip>
+                      ))}
+                    </td>
+
                     <td className={className}>
                       <Button
                         size="sm"
@@ -745,37 +741,45 @@ const handleCloseStatsModal = () => {
                         View Stats
                       </Button>
                     </td>
-              <td className={className}>
-                <div className="flex gap-2">
-                {/* The invoice button*/}
+                    <td className={className}>
+                      <div className="flex gap-2">
+                        {/* The invoice button*/}
 
-                {Role === "Admin" &&  <Button
-                    size="sm"
-                    variant="gradient"
-                    color="#fad949"
-                    onClick={() => handleFinanceClick(clients)}
-                  >
-                    Invoice
-                  </Button>}
-                 
-                  <Button
-                    size="sm"
-                    variant="text"
-                    color="blue-gray"
-                    onClick={() => handleViewClick(clients)}
-                    className="dark:text-[#fad949]"
-                  >
-                    Details
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  </CardBody>
-</Card>
+                        {Role === "Admin" && <Button
+                          size="sm"
+                          variant="gradient"
+                          color="#fad949"
+                          onClick={() => handleFinanceClick(clients)}
+                        >
+                          Invoice
+                        </Button>}
+
+                        <Menu>
+                          <MenuHandler>
+                            <Ellipsis className="cursor-pointer" />
+                          </MenuHandler>
+                          <MenuList>
+                            <MenuItem onClick={() => handleViewClick(clients)}>
+                              View details
+                            </MenuItem>
+                            <MenuItem onClick={() => setIsEmailGenDialogOpen(true)}>
+                              <span variant="gradient">
+                                Generate email
+                              </span>
+                            </MenuItem>
+                          </MenuList>
+                        </Menu>
+                        <EmailGenerationDialog uid={clients.uid} handleOpen={handleEmailGenDialogOpen} open={isEmailGenDialogOpen}/>
+
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </CardBody>
+      </Card>
 
 
       {/* Stats Details Modal */}
@@ -897,173 +901,173 @@ const handleCloseStatsModal = () => {
 
 
 
-         {/* Client Details Modal */}
-         <Dialog open={openModal} handler={closeClientModal}>
-  <DialogHeader>Client Details</DialogHeader>
-  <DialogBody divider className="max-h-[400px] overflow-y-scroll">
-    {selectedClient && (
-      <div>
-        <Typography variant="h6">{selectedClient.name}</Typography>
-        <Typography><strong>Contact Person:</strong> {selectedClient.contactPerson}</Typography>
-        <Typography><strong>Email:</strong> {selectedClient.email}</Typography>
-        <Typography><strong>Phone:</strong> {selectedClient.phone}</Typography>
-        <Typography><strong>Address:</strong> {selectedClient.address}</Typography>
-        <Typography><strong>Description:</strong> {selectedClient.description}</Typography>
-        <Typography><strong>Package:</strong> ${selectedClient.plan}</Typography>
+      {/* Client Details Modal */}
+      <Dialog open={openModal} handler={closeClientModal}>
+        <DialogHeader>Client Details</DialogHeader>
+        <DialogBody divider className="max-h-[400px] overflow-y-scroll">
+          {selectedClient && (
+            <div>
+              <Typography variant="h6">{selectedClient.name}</Typography>
+              <Typography><strong>Contact Person:</strong> {selectedClient.contactPerson}</Typography>
+              <Typography><strong>Email:</strong> {selectedClient.email}</Typography>
+              <Typography><strong>Phone:</strong> {selectedClient.phone}</Typography>
+              <Typography><strong>Address:</strong> {selectedClient.address}</Typography>
+              <Typography><strong>Description:</strong> {selectedClient.description}</Typography>
+              <Typography><strong>Package:</strong> ${selectedClient.plan}</Typography>
 
-        {/* Resources Section */}
-        <div className="mt-4">
-          <Typography variant="h6" className="text-blue-gray-700">Resources</Typography>
-          {resources.length > 0 ? (
-            resources.map((resource, index) => (
-              <div key={resource.id} className="mt-2 flex flex-col gap-2">
-                <div className="flex items-start justify-between">
+              {/* Resources Section */}
+              <div className="mt-4">
+                <Typography variant="h6" className="text-blue-gray-700">Resources</Typography>
+                {resources.length > 0 ? (
+                  resources.map((resource, index) => (
+                    <div key={resource.id} className="mt-2 flex flex-col gap-2">
+                      <div className="flex items-start justify-between">
+                        <Typography variant="small" className="text-blue-gray-500">
+                          <strong>{resource.name}</strong>
+                        </Typography>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none"
+                            onClick={() => setEditingResource(index)}
+                          >
+                            Edit
+                          </Button>
+                          <Button size="sm" color="black" onClick={() => handleCopy(resource.content)}>
+                            Copy
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none"
+                            onClick={() => handleRemoveResource(index)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                      <Typography variant="small" className="text-blue-gray-500 whitespace-pre-wrap">
+                        {resource.content}
+                      </Typography>
+                    </div>
+                  ))
+                ) : (
                   <Typography variant="small" className="text-blue-gray-500">
-                    <strong>{resource.name}</strong>
+                    No resources added.
                   </Typography>
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" 
-                      onClick={() => setEditingResource(index)}
+                )}
+                {editingResource !== null && (
+                  <div className="mt-2">
+                    <Input
+                      value={resources[editingResource].name}
+                      onChange={(e) => handleResourceNameChange(editingResource, e.target.value)}
+                      placeholder="Resource Title"
+                      className="mb-2"
+                    />
+                    <Textarea
+                      value={resources[editingResource].content}
+                      onChange={(e) => handleResourceContentChange(editingResource, e.target.value)}
+                      placeholder="Enter details in paragraph or point form"
+                    />
+                    <Button
+                      size="sm"
+                      color="blue"
+                      onClick={() => setEditingResource(null)}
+                      className="mt-2"
                     >
-                      Edit
-                    </Button>
-                    <Button size="sm" color="black" onClick={() => handleCopy(resource.content)}>
-                      Copy
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" 
-                      onClick={() => handleRemoveResource(index)}
-                    >
-                      Remove
+                      Save
                     </Button>
                   </div>
-                </div>
-                <Typography variant="small" className="text-blue-gray-500 whitespace-pre-wrap">
-                  {resource.content}
-                </Typography>
+                )}
+                <Button size="sm" color="black" onClick={handleAddResource}>Add More</Button>
               </div>
-            ))
-          ) : (
-            <Typography variant="small" className="text-blue-gray-500">
-              No resources added.
-            </Typography>
-          )}
-          {editingResource !== null && (
-            <div className="mt-2">
-              <Input 
-                value={resources[editingResource].name} 
-                onChange={(e) => handleResourceNameChange(editingResource, e.target.value)}
-                placeholder="Resource Title" 
-                className="mb-2" 
-              />
-              <Textarea 
-                value={resources[editingResource].content} 
-                onChange={(e) => handleResourceContentChange(editingResource, e.target.value)}
-                placeholder="Enter details in paragraph or point form" 
-              />
-              <Button 
-                size="sm" 
-                color="blue" 
-                onClick={() => setEditingResource(null)} 
-                className="mt-2"
-              >
-                Save
-              </Button>
-            </div>
-          )}
-          <Button size="sm" color="black" onClick={handleAddResource}>Add More</Button>
-        </div>
 
-        {/* Third Party Section */}
-        <div className="mt-4">
-          <Typography variant="h6" className="text-blue-gray-700">Third Party</Typography>
-          {thirdParty.length > 0 ? (
-            thirdParty.map((party, index) => (
-              <div key={party.id} className="mt-2 flex items-center justify-between">
-                <div>
+              {/* Third Party Section */}
+              <div className="mt-4">
+                <Typography variant="h6" className="text-blue-gray-700">Third Party</Typography>
+                {thirdParty.length > 0 ? (
+                  thirdParty.map((party, index) => (
+                    <div key={party.id} className="mt-2 flex items-center justify-between">
+                      <div>
+                        <Typography variant="small" className="text-blue-gray-500">
+                          <strong>{party.name}</strong>: {party.link}
+                        </Typography>
+                      </div>
+                      <div>
+                        <Button size="sm" className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" onClick={() => handleThirdPartyEdit(index, prompt('Enter new name:', party.name), prompt('Enter new link:', party.link))}>Edit</Button>
+                        <Button size="sm" color="black" onClick={() => handleCopy(party.link)}>Copy</Button>
+                        <Button size="sm" className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" onClick={() => handleRemoveThirdParty(index)}>Remove</Button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
                   <Typography variant="small" className="text-blue-gray-500">
-                    <strong>{party.name}</strong>: {party.link}
+                    No third-party links added.
                   </Typography>
-                </div>
-                <div>
-                  <Button size="sm" className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" onClick={() => handleThirdPartyEdit(index, prompt('Enter new name:', party.name), prompt('Enter new link:', party.link))}>Edit</Button>
-                  <Button size="sm" color="black" onClick={() => handleCopy(party.link)}>Copy</Button>
-                  <Button size="sm" className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" onClick={() => handleRemoveThirdParty(index)}>Remove</Button>
-                </div>
+                )}
+                <Button size="sm" color="black" onClick={handleAddThirdParty}>Add More</Button>
               </div>
-            ))
-          ) : (
-            <Typography variant="small" className="text-blue-gray-500">
-              No third-party links added.
-            </Typography>
-          )}
-          <Button size="sm" color="black" onClick={handleAddThirdParty}>Add More</Button>
-        </div>
 
-        {/* Documents Section */}
-        <div className="mt-4">
-          <Typography variant="h6" className="text-blue-gray-700">Documents</Typography>
-          {documents.length > 0 ? (
-            documents.map((doc, index) => (
-              <div key={index} className="mt-2 flex items-center justify-between">
-                <div>
+              {/* Documents Section */}
+              <div className="mt-4">
+                <Typography variant="h6" className="text-blue-gray-700">Documents</Typography>
+                {documents.length > 0 ? (
+                  documents.map((doc, index) => (
+                    <div key={index} className="mt-2 flex items-center justify-between">
+                      <div>
+                        <Typography variant="small" className="text-blue-gray-500">
+                          <a href={URL.createObjectURL(doc.file)} target="_blank" rel="noopener noreferrer">
+                            {doc.name}
+                          </a>
+                        </Typography>
+                      </div>
+                      <div>
+                        <Button size="sm" color="black" onClick={() => handleDocumentView(doc)}>View</Button>
+                        <Button size="sm" className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" onClick={() => handleDocumentDelete(index)}>Delete</Button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
                   <Typography variant="small" className="text-blue-gray-500">
-                    <a href={URL.createObjectURL(doc.file)} target="_blank" rel="noopener noreferrer">
-                      {doc.name}
-                    </a>
+                    No documents uploaded.
                   </Typography>
-                </div>
-                <div>
-                  <Button size="sm" color="black" onClick={() => handleDocumentView(doc)}>View</Button>
-                  <Button size="sm" className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" onClick={() => handleDocumentDelete(index)}>Delete</Button>
+                )}
+                <div className="mt-2">
+                  <Input type="file" onChange={handleDocumentUpload} />
                 </div>
               </div>
-            ))
-          ) : (
-            <Typography variant="small" className="text-blue-gray-500">
-              No documents uploaded.
-            </Typography>
+
+              {/* History Section */}
+              <div className="mt-4">
+                <Typography variant="h6" className="text-blue-gray-700">History</Typography>
+                {selectedClient.leadsHistory.map((entry, index) => (
+                  <div key={index} className="mt-1">
+                    <Typography variant="small" className="text-blue-gray-500">
+                      <strong>Company:</strong> {entry.name} <strong>| Note:</strong> {entry.note} <strong>| Date:</strong> {entry.date}
+                    </Typography>
+                  </div>
+                ))}
+              </div>
+
+              {/* Notes Section */}
+              <div className="mt-4">
+                <Typography variant="h6" className="text-blue-gray-700">Notes</Typography>
+                {selectedClient.notes.map((note, index) => (
+                  <div key={index} className="mt-1">
+                    <Typography variant="small" className="text-blue-gray-500">
+                      {note.date} - {note.note}
+                    </Typography>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
-          <div className="mt-2">
-            <Input type="file" onChange={handleDocumentUpload} />
-          </div>
-        </div>
-
-        {/* History Section */}
-        <div className="mt-4">
-          <Typography variant="h6" className="text-blue-gray-700">History</Typography>
-          {selectedClient.leadsHistory.map((entry, index) => (
-            <div key={index} className="mt-1">
-              <Typography variant="small" className="text-blue-gray-500">
-                <strong>Company:</strong> {entry.name} <strong>| Note:</strong> {entry.note} <strong>| Date:</strong> {entry.date}
-              </Typography>
-            </div>
-          ))}
-        </div>
-
-        {/* Notes Section */}
-        <div className="mt-4">
-          <Typography variant="h6" className="text-blue-gray-700">Notes</Typography>
-          {selectedClient.notes.map((note, index) => (
-            <div key={index} className="mt-1">
-              <Typography variant="small" className="text-blue-gray-500">
-                {note.date} -> {note.note}
-              </Typography>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-  </DialogBody>
-  <DialogFooter>
-    <Button color="blue-gray" onClick={closeClientModal}>
-      Close
-    </Button>
-  </DialogFooter>
-</Dialog>
+        </DialogBody>
+        <DialogFooter>
+          <Button color="blue-gray" onClick={closeClientModal}>
+            Close
+          </Button>
+        </DialogFooter>
+      </Dialog>
 
 
 
@@ -1072,95 +1076,95 @@ const handleCloseStatsModal = () => {
 
       {/* Financial History Modal */}
       <Dialog open={openFinanceModal} handler={closeFinanceModal}>
-      <DialogHeader>Financial History</DialogHeader>
-      <DialogBody divider className="max-h-[400px] overflow-y-scroll">
-        {selectedClient && (
-          <div>
-            <Typography variant="h6">Invoices for {selectedClient.name}</Typography>
-            {/* Bank Selection */}
-            <div className="mt-4">
-              <Typography variant="h6">Select Bank</Typography>
-              <select
-                className="w-full p-2 border rounded"
-                value={selectedBank}
-                onChange={handleBankChange}
-              >
-                <option value="" disabled>
-                  -- Select Bank --
-                </option>
-                <option value="Bank A">Bank A</option>
-                <option value="Bank B">Bank B</option>
-                <option value="Bank C">Bank C</option>
-              </select>
-              <Button className="mt-4" onClick={saveBankDetails}>
-                Save Bank Details
-              </Button>
-            </div>
+        <DialogHeader>Financial History</DialogHeader>
+        <DialogBody divider className="max-h-[400px] overflow-y-scroll">
+          {selectedClient && (
+            <div>
+              <Typography variant="h6">Invoices for {selectedClient.name}</Typography>
+              {/* Bank Selection */}
+              <div className="mt-4">
+                <Typography variant="h6">Select Bank</Typography>
+                <select
+                  className="w-full p-2 border rounded"
+                  value={selectedBank}
+                  onChange={handleBankChange}
+                >
+                  <option value="" disabled>
+                    -- Select Bank --
+                  </option>
+                  <option value="Bank A">Bank A</option>
+                  <option value="Bank B">Bank B</option>
+                  <option value="Bank C">Bank C</option>
+                </select>
+                <Button className="mt-4" onClick={saveBankDetails}>
+                  Save Bank Details
+                </Button>
+              </div>
 
-            {/* Existing Invoices */}
-            {selectedClient.invoices.map((invoice) => (
-              <div key={invoice.id} className="border p-2 mb-2 rounded">
+              {/* Existing Invoices */}
+              {selectedClient.invoices.map((invoice) => (
+                <div key={invoice.id} className="border p-2 mb-2 rounded">
+                  <Typography>
+                    <strong>Service:</strong> {invoice.service}
+                  </Typography>
+                  <Typography>
+                    <strong>Amount:</strong> {invoice.amount}
+                  </Typography>
+                  <Typography>
+                    <strong>Status:</strong> {invoice.status}
+                  </Typography>
+                  <Typography>
+                    <strong>Due Date:</strong> {invoice.dueDate}
+                  </Typography>
+                  <Button
+                    size="sm"
+                    color="blue-gray"
+                    onClick={() => exportInvoiceAsPDF(invoice, selectedClient)}
+                    className="mt-2"
+                  >
+                    Export as PDF
+                  </Button>
+                </div>
+              ))}
+
+              {/* Weekly Summary */}
+              <div className="mt-6 border-t pt-4">
+                <Typography variant="h6">Weekly Summary</Typography>
                 <Typography>
-                  <strong>Service:</strong> {invoice.service}
+                  <strong>Total Invoices:</strong> {selectedClient.invoices.length}
                 </Typography>
                 <Typography>
-                  <strong>Amount:</strong> {invoice.amount}
+                  <strong>Total Amount:</strong> £
+                  {selectedClient.invoices.reduce(
+                    (total, invoice) => total + parseFloat(invoice.amount),
+                    0
+                  ).toFixed(2)}
                 </Typography>
                 <Typography>
-                  <strong>Status:</strong> {invoice.status}
-                </Typography>
-                <Typography>
-                  <strong>Due Date:</strong> {invoice.dueDate}
+                  <strong>Invoice Names:</strong>{" "}
+                  {selectedClient.invoices.map((invoice) => invoice.service).join(", ")}
                 </Typography>
                 <Button
                   size="sm"
                   color="blue-gray"
-                  onClick={() => exportInvoiceAsPDF(invoice, selectedClient)}
-                  className="mt-2"
+                  onClick={() => exportWeeklySummaryAsPDF(selectedClient)}
+                  className="mt-4"
                 >
-                  Export as PDF
+                  Export Weekly Summary as PDF
                 </Button>
               </div>
-            ))}
-
-            {/* Weekly Summary */}
-            <div className="mt-6 border-t pt-4">
-              <Typography variant="h6">Weekly Summary</Typography>
-              <Typography>
-                <strong>Total Invoices:</strong> {selectedClient.invoices.length}
-              </Typography>
-              <Typography>
-                <strong>Total Amount:</strong> £
-                {selectedClient.invoices.reduce(
-                  (total, invoice) => total + parseFloat(invoice.amount),
-                  0
-                ).toFixed(2)}
-              </Typography>
-              <Typography>
-                <strong>Invoice Names:</strong>{" "}
-                {selectedClient.invoices.map((invoice) => invoice.service).join(", ")}
-              </Typography>
-              <Button
-                size="sm"
-                color="blue-gray"
-                onClick={() => exportWeeklySummaryAsPDF(selectedClient)}
-                className="mt-4"
-              >
-                Export Weekly Summary as PDF
-              </Button>
             </div>
-          </div>
-        )}
-      </DialogBody>
-      <DialogFooter>
-        <Button color="blue-gray" onClick={closeFinanceModal}>
-          Close
-        </Button>
-      </DialogFooter>
-    </Dialog>
+          )}
+        </DialogBody>
+        <DialogFooter>
+          <Button color="blue-gray" onClick={closeFinanceModal}>
+            Close
+          </Button>
+        </DialogFooter>
+      </Dialog>
 
-           {/* Dialog for showing person details */}
-           <Dialog open={isDialogOpen} handler={handleCloseDialog}>
+      {/* Dialog for showing person details */}
+      <Dialog open={isDialogOpen} handler={handleCloseDialog}>
         {selectedPerson && (
           <div className="p-6">
             <Typography variant="h5" className="mb-4">
@@ -1190,8 +1194,8 @@ const handleCloseStatsModal = () => {
           Close
         </Button>
       </Dialog>
-        {/* Dialog for editing person details */}
-        <Dialog open={isEditDialogOpen} handler={handleCloseEditDialog}>
+      {/* Dialog for editing person details */}
+      <Dialog open={isEditDialogOpen} handler={handleCloseEditDialog}>
         {selectedPerson && (
           <div className="p-6">
             <Typography variant="h5" className="mb-4">
@@ -1247,7 +1251,7 @@ const handleCloseStatsModal = () => {
         )}
       </Dialog>
 
-    </div>
+    </div >
   );
 }
 

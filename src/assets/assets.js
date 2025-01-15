@@ -4,7 +4,7 @@ import person3 from "./cool_pandar.jpeg";
 import person4 from "./cool_pantha.jpeg";
 import person5 from "./cool_poler.jpeg";
 import person6 from "./cool_tom.jpeg";
-
+import loadingSpinner from "./loading-spinner.svg";
 import client1 from "./chiro4.webp";
 import client2 from "./green_logo_2.png";
 import client3 from "./Harris.png";
@@ -57,3 +57,7 @@ export const images = {
   lead8,
   lead4,
 };
+
+export const svgs = {
+  loadingSpinner
+}

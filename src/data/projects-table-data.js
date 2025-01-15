@@ -2,6 +2,7 @@ import { images } from "@/assets/assets";
 
 export const projectsTableData = [
   {
+    uid: "nJ5gkjbRHpecpJKbP28PmUXCrgJ3",
     img: images.client5,
     name: "The Coopetto",
     members: [

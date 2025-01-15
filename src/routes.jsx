@@ -1,20 +1,17 @@
 import {
   HomeIcon,
-  UserCircleIcon,
-  TableCellsIcon,
   InformationCircleIcon,
   ServerStackIcon,
-  RectangleStackIcon,
-  DocumentArrowUpIcon,
+  TableCellsIcon,
+  UserCircleIcon
 } from "@heroicons/react/24/solid";
 import { Key, Shield, Users } from 'lucide-react';
 
-import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
-import { SignIn, SignUp } from "@/pages/auth";
 import { PermissionManagement } from "@/admin/PermissionManagement";
 import { RoleManagement } from "@/admin/RoleManagement";
 import { UserManagement } from "@/admin/UserManagement";
-import { element } from "prop-types";
+import { SignIn, SignUp } from "@/pages/auth";
+import { Home, Notifications, Profile, Tables } from "@/pages/dashboard";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
