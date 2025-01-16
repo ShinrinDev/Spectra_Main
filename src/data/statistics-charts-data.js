@@ -5,7 +5,7 @@ const websiteViewsChart = {
   height: 220,
   series: [
     {
-      name: "Views",
+      name: "Leads",
       data: [50, 20, 10, 22, 50, 10, 40],
     },
   ],
@@ -31,7 +31,7 @@ const dailySalesChart = {
   series: [
     {
       name: "Sales",
-      data: [50, 40, 300, 320, 400, 350, 200, 230, 500],
+      data: [50, 40, 300, 320, 400, 350, 200, 230, 500,100,600,0],
     },
   ],
   options: {
@@ -46,6 +46,9 @@ const dailySalesChart = {
     xaxis: {
       ...chartsConfig.xaxis,
       categories: [
+        "Jan",
+        "Feb",
+        "March",
         "Apr",
         "May",
         "Jun",
@@ -65,8 +68,8 @@ const completedTaskChart = {
   height: 220,
   series: [
     {
-      name: "Sales",
-      data: [50, 40, 300, 320, 500, 350, 200, 230, 500],
+      name: "Profit",
+      data: [50, 40, 300, 320, 500, 350, 200, 230, 500, 100,0,550],
     },
   ],
   options: {
@@ -81,6 +84,9 @@ const completedTaskChart = {
     xaxis: {
       ...chartsConfig.xaxis,
       categories: [
+        "Jan",
+        "Feb",
+        "March",
         "Apr",
         "May",
         "Jun",
@@ -98,8 +104,8 @@ const completedTasksChart = {
   ...completedTaskChart,
   series: [
     {
-      name: "Tasks",
-      data: [50, 40, 300, 220, 500, 250, 400, 230, 500],
+      name: "Clients",
+      data: [50, 40, 300, 220, 500, 250, 400, 230, 500, 200,10,0],
     },
   ],
 };
@@ -107,22 +113,22 @@ const completedTasksChart = {
 export const statisticsChartsData = [
   {
     color: "white",
-    title: "Calls Booked",
-    description: "Weekly average performance",
+    title: "Leads",
+    description: "Leads closed per week",
     footer: "Last successful call - 5 hours ago",
     chart: websiteViewsChart,
   },
   {
     color: "white",
-    title: "Weekly Leads",
-    description: "15% increase in this month's leads",
+    title: "Profit",
+    description: "Profit made per month",
     footer: "updated 4 hours ago",
     chart: dailySalesChart,
   },
   {
     color: "white",
-    title: "Successful Leads",
-    description: "Monthly average performance",
+    title: "Client Performance",
+    description: "Clients boarded per month",
     footer: "just updated",
     chart: completedTasksChart,
   },

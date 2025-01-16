@@ -19,6 +19,7 @@ import {
   Tooltip,
   Typography
 } from "@material-tailwind/react";
+import { db } from "@/firebase";
 import { jsPDF } from "jspdf";
 import { useEffect, useRef, useState } from "react";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
@@ -26,7 +27,7 @@ import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import EmailGenerationDialog from "@/components/dialogs/EmailGenerationDialog";
 import { useAuth } from "@/context/AuthContext/AuthContext";
 import { ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title } from "chart.js";
-import { doc, getDoc, getFirestore } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, getFirestore, query, where } from "firebase/firestore";
 import "leaflet/dist/leaflet.css";
 import { Ellipsis } from "lucide-react";
 
@@ -307,37 +308,9 @@ export function Tables() {
     setShowStatsModal(false);
   };
 
-
-  const handleEditDetails = (person) => {
-    setSelectedPerson(person);
-    setIsEditDialogOpen(true);
-  };
-
   const handleCloseEditDialog = () => {
     setSelectedPerson(null);
     setIsEditDialogOpen(false);
-  };
-
-  const handleSaveDetails = () => {
-    // Save edited details to the table
-    if (selectedPerson) {
-      setAuthorsTableData((prevData) =>
-        prevData.map((person) =>
-          person.name === selectedPerson.name ? selectedPerson : person
-        )
-      );
-    }
-    setIsEditDialogOpen(false);
-  };
-
-  const handleChange = (field, value) => {
-    setSelectedPerson((prev) => ({ ...prev, [field]: value }));
-  };
-
-
-  const handleViewDetails = (person) => {
-    setSelectedPerson(person);
-    setIsDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
@@ -355,16 +328,48 @@ export function Tables() {
     setSelectedClient(null);
   };
 
-  const handleFinanceClick = (client) => {
-    setSelectedClient(client);
-    setOpenFinanceModal(true);
-  };
+  
   const closeFinanceModal = () => {
     setOpenFinanceModal(false);
     setSelectedClient(null);
   };
 
   const logoUrl = images.logo;
+
+  //Fecth invoice details...
+  const [selectedID, setSelectedID] = useState(null);
+  const [financialData,setFinancialData] = useState([]);
+const handleFinanceClick = (client) => {
+  setSelectedID(client);
+  setOpenFinanceModal(true);
+  };
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      if (!selectedID) return;
+  
+      try {
+        const invRef = collection(db, "invoices");
+        const invQuery = query(invRef, where("uid", "==", selectedID));
+        const invSnap = await getDocs(invQuery);
+  
+        // Iterate over documents in the snapshot
+        const invoices = [];
+        invSnap.forEach((doc) => {
+          invoices.push({ id: doc.id, ...doc.data() });
+        });
+        
+        setFinancialData(invoices)
+        console.log("Invoices:", invoices); // Logs all invoices for the selected ID
+      } catch (error) {
+        console.error("Error fetching invoices:", error);
+      }
+    };
+  
+    fetchInvoices();
+  }, [selectedID]);
+
+  console.log("invoices map:",)
+  
 
   // PDF Export function for invoices
 
@@ -568,10 +573,11 @@ export function Tables() {
       setNewInvoice({ service: "", amount: "", dueDate: "" });
     }
   };
+  const [selectedClientId, setSelectedClientId] = useState(null);
 
-  const handleViewClick = (client) => {
-    setSelectedClient(client);
-    setOpenModal(true);
+  const handleViewClick = (clientId) => {
+    setSelectedClientId(clientId); // Store the selected client ID
+    setOpenModal(true); // Open the modal
   };
 
   const closeModal = () => {
@@ -579,207 +585,194 @@ export function Tables() {
     setSelectedClient(null);
   };
 
+  //Get clients data from firebase...
+  const [clients, setClients] = useState([]);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const clientRef = collection(db, "users");
+        const clientQuery = query(clientRef,
+          where("isVerified","==", true)
+        );
+        const querySnapshot = await getDocs(clientQuery);
+        const clientsData = await Promise.all(
+          querySnapshot.docs.map(async (docSnapshot) => {
+            const clientData = docSnapshot.data();
+
+            // Fetch leads for the client
+            const leads = await Promise.all(
+              (clientData.leads || []).map(async (leadId) => {
+                const leadDoc = await getDoc(doc(db, "leads", leadId));
+                return { id: leadId, ...leadDoc.data() };
+              })
+            );
+
+            return {
+              id: docSnapshot.id,
+              ...clientData,
+              leads,
+            };
+          })
+        );
+
+        setClients(clientsData);
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+      }
+    };
+
+    fetchClients();
+  }, []);
+
+  const [responses, setResponses] = useState([]);
+  const [selectedDetails,setSelectedDetails] = useState(null);
+
+ useEffect(() => {
+  const fetchClientDetails = async () => {
+    if (!selectedClientId) return;
+
+    try {
+      // Fetch client details
+      const clientDoc = await getDoc(doc(db, "users", selectedClientId));
+      console.log("IS client??", clientDoc);
+      if (clientDoc.exists()) {
+        setSelectedDetails(clientDoc.data());
+
+
+        console.log("Client data:>", clientDoc.data());
+      }
+
+      // Fetch onboarding answers
+      const onboardingAnswersDoc = await getDoc(doc(db, "onboardingAnswers", selectedClientId));
+      if (onboardingAnswersDoc.exists()) {
+        setResponses(onboardingAnswersDoc.data().responses || []);
+
+        console.log("Respondeddede daatatata===>>>>:", onboardingAnswersDoc.data())
+      }
+    } catch (error) {
+      console.error("Error fetching client details:", error);
+    }
+  };
+
+  fetchClientDetails();
+
+  console.log("Responses:", responses);
+  console.log("Client:", selectedDetails);
+
+}, [selectedClientId]);
+
+
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
+      
       <Card className="dark:bg-gray-900">
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-          <Typography variant="h6" color="white">
-            Clients Contact Person
-          </Typography>
-        </CardHeader>
-        <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-          <table className="w-full min-w-[640px] table-auto">
-            <thead>
-              <tr>
-                {["Person", "Company", "Edit", "Actions"].map((el) => (
-                  <th
-                    key={el}
-                    className="border-b border-blue-gray-50 py-3 px-5 text-left "
+      <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+        <Typography variant="h6" color="white">
+          Clients
+        </Typography>
+      </CardHeader>
+      <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+        <table className="w-full min-w-[640px] table-auto">
+          <thead>
+            <tr>
+              {["Companies", "Leads", "Stats", "Actions"].map((el) => (
+                <th
+                  key={el}
+                  className="border-b border-blue-gray-50 py-3 px-5 text-left"
+                >
+                  <Typography
+                    variant="small"
+                    className="text-[11px] font-bold uppercase text-blue-gray-400 dark:text-white"
                   >
-                    <Typography
-                      variant="small"
-                      className="text-[11px] font-bold uppercase text-blue-gray-400 dark:text-white"
-                    >
-                      {el}
-                    </Typography>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {authorsTableData.map((person, key) => {
-                const className = `py-3 px-5 ${key === authorsTableData.length - 1
-                  ? ""
-                  : "border-b border-blue-gray-50"
-                  }`;
+                    {el}
+                  </Typography>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {clients.map((client, key) => {
+              const className = `py-3 px-5 ${
+                key === clients.length - 1 ? "" : "border-b border-blue-gray-50"
+              }`;
 
-                return (
-                  <tr key={person.name}>
-                    <td className={className}>
-                      <div className="flex items-center gap-4">
-                        <Avatar src={person.img} alt={person.name} size="sm" variant="rounded" />
-                        <div>
-                          <Typography
-                            variant="small"
-                            color="blue-gray"
-                            className="font-semibold dark:text-white"
-                          >
-                            {person.name}
-                          </Typography>
-                          <Typography className="text-xs font-normal text-blue-gray-500 dark:text-[#fad949]">
-                            {person.email}
-                          </Typography>
-                        </div>
+              return (
+                <tr key={client.id}>
+                  <td className={className}>
+                    <div className="flex items-center gap-4">
+                      {/* Replace Avatar with a div that mimics the avatar */}
+                      <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 text-white">
+                        {client.name[0].toUpperCase()}
                       </div>
-                    </td>
-                    <td className={className}>
-                      <Typography className="text-xs font-semibold text-blue-gray-600 dark:text-white">
-                        {person.job[0]}
-                      </Typography>
-                      <Typography className="text-xs font-normal text-blue-gray-500 dark:text-[#fad949]">
-                        {person.job[1]}
-                      </Typography>
-                    </td>
-                    <td className={className}>
-                      <Button
-                        size="sm"
-                        variant="text"
-                        color="blue"
-                        onClick={() => handleEditDetails(person)}
-                      >
-                        Edit
-                      </Button>
-                    </td>
-                    <td className={className}>
-                      <Button
-                        size="sm"
-                        variant="text"
+                      <Typography
+                        variant="small"
                         color="blue-gray"
-                        onClick={() => alert("View details not implemented")}
+                        className="font-bold dark:text-[#fad949]"
                       >
-                        View
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </CardBody>
-      </Card>
-      <Card className="dark:bg-gray-900">
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-          <Typography variant="h6" color="white">
-            Client's Leads
-          </Typography>
-        </CardHeader>
-        <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-          <table className="w-full min-w-[640px] table-auto">
-            <thead>
-              <tr>
-                {["Companies", "Leads", "Stats", "Actions"].map((el) => (
-                  <th
-                    key={el}
-                    className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                  >
-                    <Typography
-                      variant="small"
-                      className="text-[11px] font-bold uppercase text-blue-gray-400 dark:text-white"
-                    >
-                      {el}
-                    </Typography>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {projectsTableData.map((clients, key) => {
-                const className = `py-3 px-5 ${key === projectsTableData.length - 1
-                  ? ""
-                  : "border-b border-blue-gray-50"
-                  }`;
-
-                const [isEmailGenDialogOpen, setIsEmailGenDialogOpen] = useState(false);
-                const handleEmailGenDialogOpen = () => setIsEmailGenDialogOpen(!isEmailGenDialogOpen);
-
-                return (
-                  <tr key={clients.name}>
-                    <td className={className}>
-                      <div className="flex items-center gap-4">
-                        <Avatar src={clients.img} alt={clients.name} size="sm" />
-                        <Typography
-                          variant="small"
-                          color="blue-gray"
-                          className="font-bold dark:text-[#fad949]"
-                        >
-                          {clients.name}
-                        </Typography>
-                      </div>
-                    </td>
-                    <td className={className}>
-                      {clients.members.map(({ img, name }, key) => (
-                        <Tooltip key={name} content={name}>
-                          <Avatar
-                            src={img}
-                            alt={name}
-                            size="xs"
-                            variant="circular"
-                            className={`cursor-pointer border-2 border-white ${key === 0 ? "" : "-ml-2.5"
-                              }`}
-                          />
+                        {client.name}
+                      </Typography>
+                    </div>
+                  </td>
+                  <td className={className}>
+                    <div className="flex gap-2">
+                      {client.leads.map((lead) => (
+                        <Tooltip key={lead.id} content={lead.name}>
+                          {/* Mimic avatar with a div */}
+                          <div
+                            className="w-6 h-6 flex items-center justify-center rounded-full bg-blue-gray-500 text-white"
+                            title={lead.name}
+                          >
+                            {lead.name[0].toUpperCase()}
+                          </div>
                         </Tooltip>
                       ))}
-                    </td>
-
-                    <td className={className}>
-                      <Button
-                        size="sm"
-                        variant="gradient"
-                        color="#fad949"
-                        onClick={() => handleStatsClick(clients)}
-                      >
-                        View Stats
-                      </Button>
-                    </td>
-                    <td className={className}>
-                      <div className="flex gap-2">
-                        {/* The invoice button*/}
-
-                        {Role === "Admin" && <Button
+                    </div>
+                  </td>
+                  <td className={className}>
+                    <Button
+                      size="sm"
+                      variant="gradient"
+                      color="#fad949"
+                      onClick={() => handleStatsClick(client.uid)}
+                    >
+                      View Stats
+                    </Button>
+                  </td>
+                  <td className={className}>
+                    <div className="flex gap-2">
+                      {Role === "Admin" && (
+                        <Button
                           size="sm"
                           variant="gradient"
                           color="#fad949"
-                          onClick={() => handleFinanceClick(clients)}
+                          onClick={() => handleFinanceClick(client.uid)}
                         >
                           Invoice
-                        </Button>}
-
-                        <Menu>
-                          <MenuHandler>
-                            <Ellipsis className="cursor-pointer" />
-                          </MenuHandler>
-                          <MenuList>
-                            <MenuItem onClick={() => handleViewClick(clients)}>
-                              View details
-                            </MenuItem>
-                            <MenuItem onClick={() => setIsEmailGenDialogOpen(true)}>
-                              <span variant="gradient">
-                                Generate email
-                              </span>
-                            </MenuItem>
-                          </MenuList>
-                        </Menu>
-                        <EmailGenerationDialog uid={clients.uid} handleOpen={handleEmailGenDialogOpen} open={isEmailGenDialogOpen}/>
-
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </CardBody>
-      </Card>
+                        </Button>
+                      )}
+                      <Menu>
+                        <MenuHandler>
+                          <Ellipsis className="cursor-pointer" />
+                        </MenuHandler>
+                        <MenuList>
+                          <MenuItem onClick={() => handleViewClick(client.uid)}>
+                            View details
+                          </MenuItem>
+                          <MenuItem>
+                            <span variant="gradient">Generate email</span>
+                          </MenuItem>
+                        </MenuList>
+                      </Menu>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </CardBody>
+    </Card>
 
 
       {/* Stats Details Modal */}
@@ -903,184 +896,54 @@ export function Tables() {
 
       {/* Client Details Modal */}
       <Dialog open={openModal} handler={closeClientModal}>
-        <DialogHeader>Client Details</DialogHeader>
-        <DialogBody divider className="max-h-[400px] overflow-y-scroll">
-          {selectedClient && (
-            <div>
-              <Typography variant="h6">{selectedClient.name}</Typography>
-              <Typography><strong>Contact Person:</strong> {selectedClient.contactPerson}</Typography>
-              <Typography><strong>Email:</strong> {selectedClient.email}</Typography>
-              <Typography><strong>Phone:</strong> {selectedClient.phone}</Typography>
-              <Typography><strong>Address:</strong> {selectedClient.address}</Typography>
-              <Typography><strong>Description:</strong> {selectedClient.description}</Typography>
-              <Typography><strong>Package:</strong> ${selectedClient.plan}</Typography>
+      <DialogHeader>Client Details</DialogHeader>
+      <DialogBody divider className="max-h-[400px] overflow-y-scroll">
+        {selectedDetails && (
+          <div>
+            <Typography variant="h6">{selectedDetails.name}</Typography>
+            <Typography><strong>Contact Person:</strong> {selectedDetails.person}</Typography>
+            <Typography><strong>Email:</strong> {selectedDetails.email}</Typography>
+            <Typography><strong>Phone:</strong> {selectedDetails.phone}</Typography>
+            <Typography><strong>Address:</strong> {selectedDetails.address}</Typography>
+            <Typography><strong>Description:</strong> {selectedDetails.description}</Typography>
+            <Typography><strong>Package:</strong> ${selectedDetails.package}</Typography>
 
-              {/* Resources Section */}
-              <div className="mt-4">
-                <Typography variant="h6" className="text-blue-gray-700">Resources</Typography>
-                {resources.length > 0 ? (
-                  resources.map((resource, index) => (
-                    <div key={resource.id} className="mt-2 flex flex-col gap-2">
-                      <div className="flex items-start justify-between">
-                        <Typography variant="small" className="text-blue-gray-500">
-                          <strong>{resource.name}</strong>
-                        </Typography>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none"
-                            onClick={() => setEditingResource(index)}
-                          >
-                            Edit
-                          </Button>
-                          <Button size="sm" color="black" onClick={() => handleCopy(resource.content)}>
-                            Copy
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none"
-                            onClick={() => handleRemoveResource(index)}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                      <Typography variant="small" className="text-blue-gray-500 whitespace-pre-wrap">
-                        {resource.content}
-                      </Typography>
-                    </div>
-                  ))
-                ) : (
-                  <Typography variant="small" className="text-blue-gray-500">
-                    No resources added.
-                  </Typography>
-                )}
-                {editingResource !== null && (
-                  <div className="mt-2">
-                    <Input
-                      value={resources[editingResource].name}
-                      onChange={(e) => handleResourceNameChange(editingResource, e.target.value)}
-                      placeholder="Resource Title"
-                      className="mb-2"
-                    />
-                    <Textarea
-                      value={resources[editingResource].content}
-                      onChange={(e) => handleResourceContentChange(editingResource, e.target.value)}
-                      placeholder="Enter details in paragraph or point form"
-                    />
-                    <Button
-                      size="sm"
-                      color="blue"
-                      onClick={() => setEditingResource(null)}
-                      className="mt-2"
-                    >
-                      Save
-                    </Button>
-                  </div>
-                )}
-                <Button size="sm" color="black" onClick={handleAddResource}>Add More</Button>
-              </div>
-
-              {/* Third Party Section */}
-              <div className="mt-4">
-                <Typography variant="h6" className="text-blue-gray-700">Third Party</Typography>
-                {thirdParty.length > 0 ? (
-                  thirdParty.map((party, index) => (
-                    <div key={party.id} className="mt-2 flex items-center justify-between">
-                      <div>
-                        <Typography variant="small" className="text-blue-gray-500">
-                          <strong>{party.name}</strong>: {party.link}
-                        </Typography>
-                      </div>
-                      <div>
-                        <Button size="sm" className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" onClick={() => handleThirdPartyEdit(index, prompt('Enter new name:', party.name), prompt('Enter new link:', party.link))}>Edit</Button>
-                        <Button size="sm" color="black" onClick={() => handleCopy(party.link)}>Copy</Button>
-                        <Button size="sm" className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" onClick={() => handleRemoveThirdParty(index)}>Remove</Button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <Typography variant="small" className="text-blue-gray-500">
-                    No third-party links added.
-                  </Typography>
-                )}
-                <Button size="sm" color="black" onClick={handleAddThirdParty}>Add More</Button>
-              </div>
-
-              {/* Documents Section */}
-              <div className="mt-4">
-                <Typography variant="h6" className="text-blue-gray-700">Documents</Typography>
-                {documents.length > 0 ? (
-                  documents.map((doc, index) => (
-                    <div key={index} className="mt-2 flex items-center justify-between">
-                      <div>
-                        <Typography variant="small" className="text-blue-gray-500">
-                          <a href={URL.createObjectURL(doc.file)} target="_blank" rel="noopener noreferrer">
-                            {doc.name}
-                          </a>
-                        </Typography>
-                      </div>
-                      <div>
-                        <Button size="sm" color="black" onClick={() => handleDocumentView(doc)}>View</Button>
-                        <Button size="sm" className="bg-[#fad949] text-white hover:bg-[#f4c235] border-none" onClick={() => handleDocumentDelete(index)}>Delete</Button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <Typography variant="small" className="text-blue-gray-500">
-                    No documents uploaded.
-                  </Typography>
-                )}
-                <div className="mt-2">
-                  <Input type="file" onChange={handleDocumentUpload} />
-                </div>
-              </div>
-
-              {/* History Section */}
-              <div className="mt-4">
-                <Typography variant="h6" className="text-blue-gray-700">History</Typography>
-                {selectedClient.leadsHistory.map((entry, index) => (
-                  <div key={index} className="mt-1">
+            {/* Onboarding Answers Section */}
+            <div className="mt-4">
+              <Typography variant="h6" className="text-blue-gray-700">Onboarding Answers</Typography>
+              {responses.length > 0 ? (
+                responses.map((response, index) => (
+                  <div key={index} className="mt-2">
                     <Typography variant="small" className="text-blue-gray-500">
-                      <strong>Company:</strong> {entry.name} <strong>| Note:</strong> {entry.note} <strong>| Date:</strong> {entry.date}
+                      <strong>Question:</strong> {response.q}
+                    </Typography>
+                    <Typography variant="small" className="text-blue-gray-500">
+                      <strong>Answer:</strong> {response.a}
                     </Typography>
                   </div>
-                ))}
-              </div>
-
-              {/* Notes Section */}
-              <div className="mt-4">
-                <Typography variant="h6" className="text-blue-gray-700">Notes</Typography>
-                {selectedClient.notes.map((note, index) => (
-                  <div key={index} className="mt-1">
-                    <Typography variant="small" className="text-blue-gray-500">
-                      {note.date} - {note.note}
-                    </Typography>
-                  </div>
-                ))}
-              </div>
+                ))
+              ) : (
+                <Typography variant="small" className="text-blue-gray-500">
+                  No onboarding answers available.
+                </Typography>
+              )}
             </div>
-          )}
-        </DialogBody>
-        <DialogFooter>
-          <Button color="blue-gray" onClick={closeClientModal}>
-            Close
-          </Button>
-        </DialogFooter>
-      </Dialog>
-
-
-
-
-
+          </div>
+        )}
+      </DialogBody>
+      <DialogFooter>
+        <Button color="blue-gray" onClick={closeClientModal}>
+          Close
+        </Button>
+      </DialogFooter>
+    </Dialog>
 
       {/* Financial History Modal */}
       <Dialog open={openFinanceModal} handler={closeFinanceModal}>
         <DialogHeader>Financial History</DialogHeader>
         <DialogBody divider className="max-h-[400px] overflow-y-scroll">
-          {selectedClient && (
             <div>
-              <Typography variant="h6">Invoices for {selectedClient.name}</Typography>
+              <Typography variant="h6">Invoices</Typography>
               {/* Bank Selection */}
               <div className="mt-4">
                 <Typography variant="h6">Select Bank</Typography>
@@ -1092,29 +955,27 @@ export function Tables() {
                   <option value="" disabled>
                     -- Select Bank --
                   </option>
-                  <option value="Bank A">Bank A</option>
-                  <option value="Bank B">Bank B</option>
-                  <option value="Bank C">Bank C</option>
+                  <option value="Bank A">Barclays</option>
+                  <option value="Bank B">Bank Circle S.A</option>
                 </select>
                 <Button className="mt-4" onClick={saveBankDetails}>
                   Save Bank Details
                 </Button>
               </div>
-
               {/* Existing Invoices */}
-              {selectedClient.invoices.map((invoice) => (
+              {financialData.map((invoice) => (
                 <div key={invoice.id} className="border p-2 mb-2 rounded">
                   <Typography>
-                    <strong>Service:</strong> {invoice.service}
+                    <strong>Service:</strong> {invoice.product}
                   </Typography>
                   <Typography>
-                    <strong>Amount:</strong> {invoice.amount}
+                    <strong>Amount:</strong> {invoice.unit}
                   </Typography>
                   <Typography>
                     <strong>Status:</strong> {invoice.status}
                   </Typography>
                   <Typography>
-                    <strong>Due Date:</strong> {invoice.dueDate}
+                    <strong>Due Date:</strong> {invoice.due.toDate().toLocaleDateString()}
                   </Typography>
                   <Button
                     size="sm"
@@ -1131,18 +992,18 @@ export function Tables() {
               <div className="mt-6 border-t pt-4">
                 <Typography variant="h6">Weekly Summary</Typography>
                 <Typography>
-                  <strong>Total Invoices:</strong> {selectedClient.invoices.length}
+                  <strong>Total Invoices:</strong> {financialData.length}
                 </Typography>
                 <Typography>
-                  <strong>Total Amount:</strong> £
-                  {selectedClient.invoices.reduce(
-                    (total, invoice) => total + parseFloat(invoice.amount),
+                  <strong>Total Amount:</strong>
+                  {financialData.reduce(
+                    (total, invoice) => total + parseFloat(invoice.unit),
                     0
                   ).toFixed(2)}
                 </Typography>
                 <Typography>
                   <strong>Invoice Names:</strong>{" "}
-                  {selectedClient.invoices.map((invoice) => invoice.service).join(", ")}
+                  {financialData.map((invoice) => invoice.product).join(", ")}
                 </Typography>
                 <Button
                   size="sm"
@@ -1154,101 +1015,12 @@ export function Tables() {
                 </Button>
               </div>
             </div>
-          )}
         </DialogBody>
         <DialogFooter>
           <Button color="blue-gray" onClick={closeFinanceModal}>
             Close
           </Button>
         </DialogFooter>
-      </Dialog>
-
-      {/* Dialog for showing person details */}
-      <Dialog open={isDialogOpen} handler={handleCloseDialog}>
-        {selectedPerson && (
-          <div className="p-6">
-            <Typography variant="h5" className="mb-4">
-              {selectedPerson.name}'s Details
-            </Typography>
-            <Typography className="mb-2">
-              <strong>Email:</strong> {selectedPerson.email}
-            </Typography>
-            <Typography className="mb-2">
-              <strong>Job Title:</strong> {selectedPerson.job[0]}
-            </Typography>
-            <Typography className="mb-2">
-              <strong>Company:</strong> {selectedPerson.job[1]}
-            </Typography>
-            <Typography>
-              <strong>Status:</strong> {selectedPerson.online ? "Online" : "Offline"}
-            </Typography>
-          </div>
-        )}
-        <Button
-          size="sm"
-          variant="gradient"
-          color="red"
-          onClick={handleCloseDialog}
-          className="mt-4"
-        >
-          Close
-        </Button>
-      </Dialog>
-      {/* Dialog for editing person details */}
-      <Dialog open={isEditDialogOpen} handler={handleCloseEditDialog}>
-        {selectedPerson && (
-          <div className="p-6">
-            <Typography variant="h5" className="mb-4">
-              Edit {selectedPerson.name}'s Details
-            </Typography>
-            <div className="mb-4">
-              <Input
-                label="Name"
-                value={selectedPerson.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-              />
-            </div>
-            <div className="mb-4">
-              <Input
-                label="Email"
-                value={selectedPerson.email}
-                onChange={(e) => handleChange("email", e.target.value)}
-              />
-            </div>
-            <div className="mb-4">
-              <Input
-                label="Job Title"
-                value={selectedPerson.job[0]}
-                onChange={(e) => handleChange("job", [e.target.value, selectedPerson.job[1]])}
-              />
-            </div>
-            <div className="mb-4">
-              <Input
-                label="Company"
-                value={selectedPerson.job[1]}
-                onChange={(e) => handleChange("job", [selectedPerson.job[0], e.target.value])}
-              />
-            </div>
-            <Button
-              size="sm"
-              variant="gradient"
-              color="green"
-              onClick={handleSaveDetails}
-              className="mt-4"
-            >
-              Save
-            </Button>
-            <Button
-              size="sm"
-              variant="gradient"
-              color="red"
-              onClick={handleCloseEditDialog}
-              className="mt-4 ml-2"
-            >
-              Cancel
-            </Button>
-          </div>
-        )}
       </Dialog>
 
     </div >

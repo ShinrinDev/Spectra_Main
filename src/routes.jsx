@@ -53,23 +53,16 @@ export const routes = [
     pages: [
       {
         icon: <Users {...icon} />,
-        name: "users",
+        name: "employees Management",
         path: "/users",
         element: <UserManagement />,
       },
       {
         icon: <Shield {...icon} />,
-        name: "roles",
+        name: "Clients Management",
         path: "/roles",
         element: <RoleManagement />,
       },
-      {
-        icon: <Key {...icon} />,
-        name: "permissions",
-        path: "/permissions",
-        element: <PermissionManagement />,
-      },
-
     ],
   },
   {
