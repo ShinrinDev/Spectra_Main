@@ -26,12 +26,12 @@ import { MapContainer, Marker, TileLayer } from "react-leaflet";
 //import Chart from "chart.js/auto";
 import EmailGenerationDialog from "@/components/dialogs/EmailGenerationDialog";
 import { useAuth } from "@/context/AuthContext/AuthContext";
-import { ArcElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title } from "chart.js";
-import { collection, doc, getDoc, getDocs, getFirestore, query, where } from "firebase/firestore";
+import { ArcElement, CategoryScale, Chart as ChartJS, DoughnutController, Legend, LinearScale, LineController, LineElement, PointElement, Title } from "chart.js";
+import { collection, doc, getDoc, getDocs, getFirestore, query, where,updateDoc } from "firebase/firestore";
 import "leaflet/dist/leaflet.css";
 import { Ellipsis } from "lucide-react";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Legend, ArcElement);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement,LineController,DoughnutController, Title, Legend, ArcElement);
 
 export function Tables() {
   const { user } = useAuth();
@@ -246,67 +246,7 @@ export function Tables() {
     window.open(fileURL, "_blank");
   };
 
-  const lineChartRef = useRef(null);
-  const doughnutChartRef = useRef(null);
-  const handleStatsClick = (client) => {
-    setCurrentClient(client);
-    setShowStatsModal(true);
-  };
-  useEffect(() => {
-    if (CurrentClient) {
-      // Initialize Lead Response Performance Chart
-      const ctxLine = lineChartRef.current.getContext('2d');
-      new ChartJS(ctxLine, {
-        type: 'line',
-        data: {
-          labels: CurrentClient.leadResponseDates,  // Use the dates from the client
-          datasets: [{
-            label: 'Lead Response Performance',
-            data: CurrentClient.leadResponseValues,  // Use the response values from the client
-            fill: false,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Lead Response Over Time'
-            }
-          }
-        }
-      });
 
-      // Initialize Targeted Industries Doughnut Chart
-      const ctxDoughnut = doughnutChartRef.current.getContext('2d');
-      new ChartJS(ctxDoughnut, {
-        type: 'doughnut',
-        data: {
-          labels: CurrentClient.targetedIndustries,  // Use the industries from the client
-          datasets: [{
-            label: 'Targeted Industries',
-            data: CurrentClient.targetedIndustriesValues,  // Use the values from the client
-            backgroundColor: ['#FF5733', '#33FF57', '#3357FF', '#FFC300', '#DAF7A6'], // Customize colors
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Targeted Industries'
-            }
-          }
-        }
-      });
-    }
-  }, [CurrentClient]);
-
-  const handleCloseStatsModal = () => {
-    setShowStatsModal(false);
-  };
 
   const handleCloseEditDialog = () => {
     setSelectedPerson(null);
@@ -663,6 +603,161 @@ const handleFinanceClick = (client) => {
 }, [selectedClientId]);
 
 
+
+
+const [isBoarded, setIsBoarded] = useState(false);
+const [instantlyKey, setInstantlyKey] = useState('');
+const [industries, setIndustries] = useState([]);
+const [industryName, setIndustryName] = useState('');
+const [industryPercentage, setIndustryPercentage] = useState('');
+
+const lineChartRef = useRef(null);
+const doughnutChartRef = useRef(null);
+
+const [clientUid,setClientUid] = useState("");
+const [currentStats,setCurrentStats] = useState(null);
+
+
+const handleOpenStats = (clientid) =>{
+  setClientUid(clientid);
+  setShowStatsModal(true);
+}
+
+const handleCloseStatsModal = () => {
+  setShowStatsModal(false);
+  setCurrentStats(null);
+};
+
+useEffect(() => {
+  const fetchClientData = async () => {
+    if (clientUid) {
+      const userDocRef = doc(db, 'users', clientUid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setIsBoarded(userData.borded === true);
+
+        if (userData.borded) {
+          const statsDocRef = doc(db, 'stats', clientUid);
+          const statsDoc = await getDoc(statsDocRef);
+
+          if (statsDoc.exists()) {
+            const statsData = statsDoc.data();
+
+            // Ensure leads tracking is initialized
+            if (!statsData.leadsByMonth) {
+              const initialLeads = {
+                leadsByMonth: Array(12).fill(0), // Initialize months with 0 leads
+              };
+              await updateDoc(statsDocRef, initialLeads);
+              statsData.leadsByMonth = initialLeads.leadsByMonth;
+            }
+
+            setCurrentStats(statsData);
+          } else {
+            setCurrentStats(null);
+          }
+        }
+      }
+    }
+  };
+
+  fetchClientData();
+}, [clientUid]);
+
+useEffect(() => {
+  if (currentStats) {
+    // Initialize Line Chart for Leads Over Time
+    const ctxLine = lineChartRef.current.getContext('2d');
+    new ChartJS(ctxLine, {
+      type: 'line',
+      data: {
+        labels: Array.from({ length: 12 }, (_, i) => new Date(0, i).toLocaleString('default', { month: 'short' })),
+        datasets: [
+          {
+            label: 'Leads Over Time',
+            data: currentStats.leadsByMonth || Array(12).fill(0),
+            fill: false,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            tension: 0.1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Leads Over Time (Monthly)',
+          },
+        },
+      },
+    });
+
+    // Initialize Doughnut Chart for Industries
+    const ctxDoughnut = doughnutChartRef.current.getContext('2d');
+    new ChartJS(ctxDoughnut, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(currentStats.industries || {}),
+        datasets: [
+          {
+            label: 'Targeted Industries',
+            data: Object.values(currentStats.industries || {}),
+            backgroundColor: ['#FF5733', '#33FF57', '#3357FF', '#FFC300', '#DAF7A6'],
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Industries Breakdown',
+          },
+        },
+      },
+    });
+  }
+}, [currentStats]);
+
+const handleBoardClient = async () => {
+  if (!instantlyKey || industries.length === 0) {
+    alert('Please provide all required inputs.');
+    return;
+  }
+
+  const statsData = {
+    instantKey: instantlyKey,
+    industries: industries.reduce((acc, { name, percentage }) => {
+      acc[name] = percentage;
+      return acc;
+    }, {}),
+    campaignKeys: [],
+    leadsByMonth: Array(12).fill(0), // Initialize monthly leads with 0
+  };
+
+  await setDoc(doc(db, 'stats', clientUid), statsData);
+  setCurrentClient(statsData);
+  setIsBoarded(true);
+
+  // Update the user's `borded` status
+  await setDoc(doc(db, 'users', clientUid), { borded: true }, { merge: true });
+};
+
+const addIndustry = () => {
+  if (!industryName || !industryPercentage) {
+    alert('Please enter a valid industry and percentage.');
+    return;
+  }
+
+  setIndustries((prev) => [...prev, { name: industryName, percentage: industryPercentage }]);
+  setIndustryName('');
+  setIndustryPercentage('');
+};
+
+
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       
@@ -734,7 +829,7 @@ const handleFinanceClick = (client) => {
                       size="sm"
                       variant="gradient"
                       color="#fad949"
-                      onClick={() => handleStatsClick(client.uid)}
+                      onClick={() => handleOpenStats(client.uid)}
                     >
                       View Stats
                     </Button>
@@ -777,66 +872,84 @@ const handleFinanceClick = (client) => {
 
       {/* Stats Details Modal */}
       <Dialog open={ShowStatsModal} onClose={handleCloseStatsModal} maxWidth="md" fullWidth scroll="paper">
-        <DialogHeader>Client Stats</DialogHeader>
-        <DialogBody divider className="max-h-[400px] overflow-y-scroll">
-          <div className="p-6" style={{ overflowY: "auto" }}>
-            {CurrentClient && (
+      <DialogHeader>Client Stats</DialogHeader>
+      <DialogBody divider className="max-h-[400px] overflow-y-scroll">
+        <div className="p-6" style={{ overflowY: 'auto' }}>
+          {!isBoarded ? (
+            <div>
+              <Typography variant="h5" className="mb-4">
+                Board Client
+              </Typography>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Instantly Key</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg px-3 py-2"
+                  value={instantlyKey}
+                  onChange={(e) => setInstantlyKey(e.target.value)}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Industries</label>
+                <div className="flex items-center mb-2">
+                  <input
+                    type="text"
+                    placeholder="Industry Name"
+                    className="flex-1 border rounded-l-lg px-3 py-2"
+                    value={industryName}
+                    onChange={(e) => setIndustryName(e.target.value)}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Percentage"
+                    className="w-24 border rounded-r-lg px-3 py-2"
+                    value={industryPercentage}
+                    onChange={(e) => setIndustryPercentage(e.target.value)}
+                  />
+                  <Button size="sm" variant="gradient" color="blue" className="ml-2" onClick={addIndustry}>
+                    Add
+                  </Button>
+                </div>
+                <div>
+                  {industries.map((ind, index) => (
+                    <p key={index} className="text-gray-700">
+                      {ind.name}: {ind.percentage}%
+                    </p>
+                  ))}
+                </div>
+              </div>
+              <Button size="sm" variant="gradient" color="green" onClick={handleBoardClient}>
+                Board Client
+              </Button>
+            </div>
+          ) : (
+            currentStats && (
               <>
                 <Typography variant="h5" className="mb-4">
-                  {CurrentClient.name} - Stats
+                  {currentStats.instantKey} - Stats
                 </Typography>
-
-                {/* Line Chart */}
+                <div className="mb-4">
+                  <p className="text-gray-700">
+                    <strong>Instantly Key:</strong> {currentStats.instantKey}
+                  </p>
+                </div>
                 <div className="mb-6">
                   <canvas ref={lineChartRef} width="400" height="200"></canvas>
                 </div>
-
-                {/* Doughnut Chart */}
                 <div className="mb-6">
                   <canvas ref={doughnutChartRef} width="300" height="300"></canvas>
                 </div>
-
-                {/* Stats Summary */}
-                <div className="mb-4">
-                  <p className="text-gray-700 text-sm">
-                    <strong>Total Leads:</strong> {CurrentClient.totalLeads}
-                  </p>
-                  <p className="text-gray-700 text-sm">
-                    <strong>Responses:</strong> {CurrentClient.contacted}
-                  </p>
-                  <p className="text-gray-700 text-sm flex items-center">
-                    <strong>Positive Responses:</strong> {CurrentClient.positiveResponses}
-                    <Button
-                      size="sm"
-                      variant="outlined"
-                      color="blue"
-                      className="ml-4"
-                      onClick={() => setShowEmailsModal(true)}
-                    >
-                      View Emails
-                    </Button>
-                  </p>
-                </div>
-
-                {/* Map */}
-                <div className="h-64 w-full mb-4">
-                  <MapContainer center={[0, 0]} zoom={2} className="h-full w-full rounded-lg">
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    {CurrentClient.leadLocations.map((loc, index) => (
-                      <Marker position={[loc.lat, loc.lng]} key={index} />
-                    ))}
-                  </MapContainer>
-                </div>
               </>
-            )}
-          </div>
-        </DialogBody>
-        <DialogFooter>
-          <Button size="sm" variant="gradient" color="red" onClick={handleCloseStatsModal}>
-            Close
-          </Button>
-        </DialogFooter>
-      </Dialog>
+            )
+          )}
+        </div>
+      </DialogBody>
+      <DialogFooter>
+        <Button size="sm" variant="gradient" color="red" onClick={handleCloseStatsModal}>
+          Close
+        </Button>
+      </DialogFooter>
+    </Dialog>
 
       {/* Emails Popup */}
       <Dialog open={showEmailsModal} onClose={() => setShowEmailsModal(false)} maxWidth="md" fullWidth>
