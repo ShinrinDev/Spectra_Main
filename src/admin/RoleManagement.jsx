@@ -60,6 +60,28 @@ export function RoleManagement() {
             console.error("Error toggling status:", error);
           }
         };
+        const handleToggleDOne = async (id) =>{
+          try{
+            const userRef = doc(firestore, "users", id);
+            const user = users2.find((user) => user.id === id);
+      
+            if (user) {
+              const newStatus = user.done ? false : true;
+            
+              // Update Firestore
+              await updateDoc(userRef, { done: newStatus });
+            
+              // Update local state
+              setUsers2(
+                users2.map((u) =>
+                  u.id === id ? { ...u, done: newStatus } : u
+                )
+              );
+            }
+          }catch(error){
+            console.error("Error toggling done:", error);
+          }
+        }
 
          const handleDeleteUser = async () => {
             if (deletingUser && deleteConfirmation === deletingUser.name) {
@@ -123,6 +145,16 @@ export function RoleManagement() {
                   }`}
                 >
                 {user.isVerified ? "Verified" : "Not Verified"}
+                </button>
+
+                <button
+                onClick={() => handleToggleDOne(user.id)}
+                className={`px-2 py-1 rounded ${
+                  user.done
+                  ? "bg-[#fad949] text-white"
+                  : "bg-gray-500 text-white"
+                }`}>
+                {user.done ? "Done" : "Not Done"}
                 </button>
               </td>
               <td className="py-2 px-4 border-b">

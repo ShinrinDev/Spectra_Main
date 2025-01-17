@@ -27,7 +27,7 @@ import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import EmailGenerationDialog from "@/components/dialogs/EmailGenerationDialog";
 import { useAuth } from "@/context/AuthContext/AuthContext";
 import { ArcElement, CategoryScale, Chart as ChartJS, DoughnutController, Legend, LinearScale, LineController, LineElement, PointElement, Title } from "chart.js";
-import { collection, doc, getDoc, getDocs, getFirestore, query, where,updateDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs,setDoc, getFirestore, query, where,updateDoc } from "firebase/firestore";
 import "leaflet/dist/leaflet.css";
 import { Ellipsis } from "lucide-react";
 
@@ -1018,8 +1018,6 @@ const addIndustry = () => {
             <Typography><strong>Email:</strong> {selectedDetails.email}</Typography>
             <Typography><strong>Phone:</strong> {selectedDetails.phone}</Typography>
             <Typography><strong>Address:</strong> {selectedDetails.address}</Typography>
-            <Typography><strong>Description:</strong> {selectedDetails.description}</Typography>
-            <Typography><strong>Package:</strong> ${selectedDetails.package}</Typography>
 
             {/* Onboarding Answers Section */}
             <div className="mt-4">
