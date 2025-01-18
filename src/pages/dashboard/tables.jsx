@@ -757,7 +757,8 @@ const addIndustry = () => {
   setIndustryPercentage('');
 };
 
-
+const [isEmailGenDialogOpen,setIsEmailGenDialogOpen] = useState(false)
+const handleEmailGenDialogOpen = () => setIsEmailGenDialogOpen(!isEmailGenDialogOpen);
   return (
     <div className="mt-12 mb-8 flex flex-col gap-12">
       
@@ -854,11 +855,12 @@ const addIndustry = () => {
                           <MenuItem onClick={() => handleViewClick(client.uid)}>
                             View details
                           </MenuItem>
-                          <MenuItem>
+                          <MenuItem onClick={() => setIsEmailGenDialogOpen(true)}>
                             <span variant="gradient">Generate email</span>
                           </MenuItem>
                         </MenuList>
                       </Menu>
+                    <EmailGenerationDialog uid={client.uid} handleOpen={handleEmailGenDialogOpen} open={isEmailGenDialogOpen}/>
                     </div>
                   </td>
                 </tr>
