@@ -3,7 +3,7 @@ import { Dashboard, Auth, Admin } from "@/layouts";
 import ProtectedRoute from "./ProtectedRoute";
 import { Unauthorized } from "./pages/dashboard";
 import { Unpermited } from "./pages/dashboard/unpermited";
-
+import { Toaster } from "sonner";
 function App() {
   return (
     <Routes>
@@ -20,6 +20,7 @@ function App() {
       <Route path="*" element={<Navigate to="/dashboard/home" replace />} />
       <Route path="/unauthorized" element={<Unauthorized/>} />
       <Route path="/unpermited" element={<Unpermited/>}/>
+    
     </Routes>
   );
 }

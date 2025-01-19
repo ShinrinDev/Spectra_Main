@@ -124,7 +124,7 @@ export function UserManagement() {
 
   return (
     <div className="bg-white dark:bg-gray-900 text-black dark:text-white">
-      <h2 className="text-2xl font-bold mb-4">User Management</h2>
+      <h2 className="text-2xl font-bold mb-4">Empoyee Management</h2>
       <div className="flex justify-between mb-4">
         <input
           type="text"
@@ -208,7 +208,7 @@ export function UserManagement() {
             <div className="flex space-x-2">
               <button
                 onClick={handleSaveChanges}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                className="bg-[#fad949] text-white px-4 py-2 rounded-md"
               >
                 Save Changes
               </button>

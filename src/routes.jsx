@@ -1,19 +1,17 @@
 import {
   HomeIcon,
-  UserCircleIcon,
-  TableCellsIcon,
   InformationCircleIcon,
   ServerStackIcon,
-  RectangleStackIcon,
-  DocumentArrowUpIcon,
+  TableCellsIcon,
+  UserCircleIcon
 } from "@heroicons/react/24/solid";
 import { Key, Shield, Users } from 'lucide-react';
 
-import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
-import { SignIn, SignUp } from "@/pages/auth";
 import { PermissionManagement } from "@/admin/PermissionManagement";
 import { RoleManagement } from "@/admin/RoleManagement";
 import { UserManagement } from "@/admin/UserManagement";
+import { SignIn, SignUp } from "@/pages/auth";
+import { Home, Notifications, Profile, Tables } from "@/pages/dashboard";
 import { element } from "prop-types";
 import CampaignsComponent from "./pages/dashboard/campaigns";
 
@@ -63,23 +61,16 @@ export const routes = [
     pages: [
       {
         icon: <Users {...icon} />,
-        name: "users",
+        name: "employees Management",
         path: "/users",
         element: <UserManagement />,
       },
       {
         icon: <Shield {...icon} />,
-        name: "roles",
+        name: "Clients Management",
         path: "/roles",
         element: <RoleManagement />,
       },
-      {
-        icon: <Key {...icon} />,
-        name: "permissions",
-        path: "/permissions",
-        element: <PermissionManagement />,
-      },
-
     ],
   },
   {
