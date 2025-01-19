@@ -15,6 +15,7 @@ import { PermissionManagement } from "@/admin/PermissionManagement";
 import { RoleManagement } from "@/admin/RoleManagement";
 import { UserManagement } from "@/admin/UserManagement";
 import { element } from "prop-types";
+import CampaignsComponent from "./pages/dashboard/campaigns";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -47,6 +48,12 @@ export const routes = [
         name: "notifications",
         path: "/notifications",
         element: <Notifications />,
+      },
+      {
+        icon: <TableCellsIcon {...icon} />,
+        name: "campaigns",
+        path: "/campaigns",
+        element: <CampaignsComponent />,
       },
     ],
   },
