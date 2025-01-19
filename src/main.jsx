@@ -18,6 +18,7 @@ import { ThemeProvider } from "@material-tailwind/react";
 import { MaterialTailwindControllerProvider } from "@/context";
 import { AuthProvider } from "./context/AuthContext/AuthContext";
 import "../public/css/tailwind.css";
+import { Toaster } from "sonner";
 
 // Dark Mode Context
 const DarkModeContext = React.createContext();
@@ -53,6 +54,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <MaterialTailwindControllerProvider>
           <DarkModeProvider>
             <App />
+            <Toaster richColors/>
           </DarkModeProvider>
         </MaterialTailwindControllerProvider>
       </ThemeProvider>
