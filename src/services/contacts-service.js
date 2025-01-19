@@ -6,11 +6,7 @@ const ContactsService = {
   //Go High Public API Call
   fetchContacts: async (locationId = "ve9EPM428h8vShlRW1KT") => { //Remove default param only for mock
     try {
-      const response = await httpClient.get(`/39582863/contacts/`, { //Todo: for the live server only "/contacts/" required
-        params: {
-          locationId: locationId
-        }
-      });
+      const response = await httpClient.get(`/39582863/contacts/search`); //Todo: for the live server only "/contacts/" required
       return response.data.contacts;
     } catch (err) {
       throw new Error('Error fetching contacts');
@@ -144,7 +140,7 @@ const ContactsService = {
   deleteContact: async (contactId = 'ocQHyuzHvysMo5N5VsXc') => { //Remove default param only for mock
     try {
       const response = await httpClient.delete(`/39582863/contacts/${contactId}`); //Todo: for the live server on "/contacts/${contactId}" required
-      return response.data.contact;
+      return response.data;
     } catch (err) {
       throw new Error('Error deleting contact');
     }
@@ -162,7 +158,7 @@ const ContactsService = {
   addTagsToContact: async (contactId, tags = {tags: ['minim', 'velit magna']}) => { //Remove default param only for mock
     try {
       const response = await httpClient.post(`/39582863/contacts/${contactId}/tags`, { data: tags }); //Todo: for the live server on "/contacts/${contactId}/tags" required
-      return response.data.contact;
+      return response.data.tags;
     } catch (err) {
       throw new Error('Error serching contact by Id');
     }

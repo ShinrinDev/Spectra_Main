@@ -6,14 +6,14 @@ const SubAccountsService = {
   //Go High Public API Call
   fetchSubAccounts: async () => { //Remove default param only for mock
     try {
-      const response = await httpClient.get(`/39582857/locations/`); //Todo: for the live server on "/locations" required
-      return response.data.location;
+      const response = await httpClient.get(`/39582857/locations/search`); //Todo: for the live server on "/locations" required
+      return response.data.locations;
     } catch (err) {
       throw new Error('Error fetching sub accounts');
     }
   },
 
-  fetchSubAccountsById: async (locationId = "ve9EPM428h8vShlRW1KT") => { //Remove default param only for mock
+  fetchSubAccountById: async (locationId = "ve9EPM428h8vShlRW1KT") => { //Remove default param only for mock
     try {
       const response = await httpClient.get(`/39582857/locations/${locationId}`); //Todo: for the live server on "/locations/${locationId}" required
       return response.data.location;
@@ -22,10 +22,10 @@ const SubAccountsService = {
     }
   },
 
-  updateSubAccounts: async (locationId = "ve9EPM428h8vShlRW1KT", locationBody = {
+  updateSubAccount: async (locationId = "ve9EPM428h8vShlRW1KT", locationBody = {
     "name": "Mark Shoes",
     "phone": "+1410039940",
-    "companyId": "UAXssdawIWAWD",
+    "companyId": "UAXssdawIWAWD", // required
     "address": "4th fleet street",
     "city": "New York",
     "state": "Illinois",
@@ -72,13 +72,13 @@ const SubAccountsService = {
   }) => { //Remove default param only for mock
     try {
       const response = await httpClient.put(`/39582857/locations/${locationId}`, {data : locationBody}); //Todo: for the live server on "/locations/${locationId}" required
-      return response.data.location;
+      return response.data;
     } catch (err) {
-      throw new Error('Error fetching sub accounts');
+      throw new Error('Error updating a sub account');
     }
   },
 
-  createSubAccounts: async (locationBody = {
+  createSubAccount: async (locationBody = {
     name: 'Mark Shoes', // required
     phone: '+1410039940',
     companyId: 'UAXssdawIWAWD',
@@ -115,16 +115,16 @@ const SubAccountsService = {
   }) => { //Remove default param only for mock
     try {
       const response = await httpClient.post(`/39582857/locations/`, {data : locationBody}); //Todo: for the live server on "/locations/${locationId}" required
-      return response.data.location;
+      return response.data;
     } catch (err) {
-      throw new Error('Error fetching sub accounts');
+      throw new Error('Error creating a sub account');
     }
   },
 
-  deleteSubAccounts: async (locationId = "ve9EPM428h8vShlRW1KT", deleteTeilioAccount = false) => { //Remove default param only for mock
+  deleteSubAccount: async (locationId = "ve9EPM428h8vShlRW1KT", deleteTeilioAccount = false) => { //Remove default param only for mock
     try {
       const response = await httpClient.delete(`/39582857/locations/${locationId}`, {params : {deleteTwilioAccount: deleteTeilioAccount}}); //Todo: for the live server on "/locations/${locationId}" required
-      return response.data.location;
+      return response.data;
     } catch (err) {
       throw new Error('Error fetching sub accounts');
     }

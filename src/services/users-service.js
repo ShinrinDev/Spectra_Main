@@ -12,14 +12,13 @@ const UsersService = {
       throw new Error('Error fetching users');
     }
   },
-
-  
-  fetchUsersById: async (userId = "") => { //Remove default param only for mock
+ 
+  fetchUserById: async (userId = "") => { //Remove default param only for mock
     try {
       const response = await httpClient.get(`/39582858/users/${userId}`); //Todo: for the live server on "/users/${userId}" required
       return response.data;
     } catch (err) {
-      throw new Error('Error fetching users');
+      throw new Error('Error fetching user');
     }
   },
 
@@ -81,7 +80,7 @@ const UsersService = {
   }) => { //Remove default param only for mock
     try {
       const response = await httpClient.put(`/39582857/users/${userId}`, {data : userBody}); //Todo: for the live server on "/users/${userId}" required
-      return response.data.user;
+      return response.data;
     } catch (err) {
       throw new Error('Error fetching users');
     }
@@ -124,7 +123,7 @@ const UsersService = {
   }) => { //Remove default param only for mock
     try {
       const response = await httpClient.post(`/39582857/users/`, {data : userBody}); //Todo: for the live server on "/users/" required
-      return response.data.user;
+      return response.data;
     } catch (err) {
       throw new Error('Error fetching users');
     }
@@ -133,7 +132,7 @@ const UsersService = {
   deleteUsers: async (userId = "") => { //Remove default param only for mock
     try {
       const response = await httpClient.delete(`/39582857/users/${userId}`); //Todo: for the live server on "/users/${userId}" required
-      return response.data.user;
+      return response.data;
     } catch (err) {
       throw new Error('Error fetching users');
     }
